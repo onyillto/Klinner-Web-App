@@ -19,9 +19,20 @@ export default function BookingsPage() {
   const fetchUserBookings = async () => {
     try {
       setLoading(true);
+      setError(null);
+
+      // Add timeout for loading state (15 seconds max)
+      const timeoutId = setTimeout(() => {
+        setLoading(false);
+        setError(
+          "Request timed out. Please check your connection and try again."
+        );
+      }, 15000);
+
       // Get user ID from localStorage or wherever you store it
       const userData = localStorage.getItem("user");
       if (!userData) {
+        clearTimeout(timeoutId);
         setError("User not found. Please log in again.");
         setLoading(false);
         return;
@@ -30,7 +41,16 @@ export default function BookingsPage() {
       const user = JSON.parse(userData);
       const userId = user.user_id || user.id;
 
-      const response = await fetch(`/api/v1/user/services/${userId}`, {
+      console.log("🔍 Fetching bookings for user:", userId);
+
+      // Update this URL to match your actual API base URL
+      const API_BASE_URL =
+        process.env.NEXT_PUBLIC_API_URL || "https://your-api-domain.com";
+      const apiUrl = `${API_BASE_URL}/api/v1/user/services/${userId}`;
+
+      console.log("📡 Making API call to:", apiUrl);
+
+      const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -39,11 +59,14 @@ export default function BookingsPage() {
         },
       });
 
+      clearTimeout(timeoutId); // Clear timeout on successful response
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log("✅ API Response:", result);
 
       if (result.success) {
         // Transform API data to match frontend expectations
@@ -65,13 +88,14 @@ export default function BookingsPage() {
           service_id: item.service_id,
         }));
 
+        console.log("🔄 Transformed bookings:", transformedBookings);
         setBookings(transformedBookings);
       } else {
         setError(result.message || "Failed to fetch bookings");
       }
     } catch (error) {
-      console.error("Error fetching bookings:", error);
-      setError("Failed to load bookings. Please try again.");
+      console.error("💥 Error fetching bookings:", error);
+      setError(`Failed to load bookings: ${error.message}`);
     } finally {
       setLoading(false);
     }

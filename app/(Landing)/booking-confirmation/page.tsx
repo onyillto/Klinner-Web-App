@@ -7,6 +7,8 @@ import Head from "next/head";
 import Cookies from "js-cookie";
 
 // Create a separate component that uses searchParams
+// Replace your entire BookingVerification component with this enhanced version:
+
 function BookingVerification({
   bookingData,
   setBookingData,
@@ -16,31 +18,47 @@ function BookingVerification({
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    console.log("🚀 BookingVerification useEffect triggered");
+    console.log("📦 bookingData exists:", !!bookingData);
+    console.log("🔍 searchParams:", Object.fromEntries(searchParams.entries()));
+    
     const verifyPayment = async () => {
       try {
+        console.log("🔍 Starting payment verification...");
+        
         // Check if we have a reference from Paystack redirect
         const reference = searchParams.get("reference");
+        const trxref = searchParams.get("trxref");
+        
+        console.log("📄 URL parameters:", { reference, trxref });
 
         // If no reference in URL but booking shows paid, assume it's already verified
-        if (!reference) {
+        if (!reference && !trxref) {
+          console.log("❌ No payment reference found in URL");
           setPaymentStatus(
-            bookingData.paymentStatus === "paid" ? "success" : "pending"
+            bookingData?.paymentStatus === "paid" ? "success" : "pending"
           );
           setLoading(false);
           return;
         }
 
+        const paymentRef = reference || trxref;
+        console.log("✅ Using payment reference:", paymentRef);
+
         // Verify payment status with backend
-        await verifyPaymentWithBackend(reference, bookingData);
+        await verifyPaymentWithBackend(paymentRef, bookingData);
       } catch (error) {
-        console.error("Error verifying payment:", error);
+        console.error("💥 Error verifying payment:", error);
         setPaymentStatus("error");
         setLoading(false);
       }
     };
 
     if (bookingData) {
+      console.log("✅ bookingData available, starting verification");
       verifyPayment();
+    } else {
+      console.log("⏳ Waiting for bookingData...");
     }
   }, [searchParams, bookingData, setPaymentStatus, setLoading]);
 
@@ -48,42 +66,83 @@ function BookingVerification({
     try {
       const authToken = Cookies.get("auth_token");
 
-      const response = await fetch(
-        `https://klinner.onrender.com/api/v1/payments/verify-payment`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ reference }), // << send reference inside the body
-        }
-      );
+      console.log("🔍 DEBUGGING PAYMENT VERIFICATION");
+      console.log("📞 Calling backend with reference:", reference);
+      console.log("🔑 Auth token exists:", !!authToken);
+      console.log("🔑 Auth token preview:", authToken?.substring(0, 20) + "...");
+      console.log("📦 Booking data:", parsedBooking);
 
-      const data = await response.json();
+      const requestUrl = `https://klinner.onrender.com/api/v1/service/verify-payment`;
+      const requestBody = { reference };
+      
+      console.log("🌐 Request URL:", requestUrl);
+      console.log("📤 Request body:", requestBody);
+
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("🌐 Response received!");
+      console.log("📊 Response status:", response.status);
+      console.log("✅ Response ok:", response.ok);
+      console.log("🔗 Response URL:", response.url);
+
+      let data;
+      try {
+        data = await response.json();
+        console.log("📄 Response data:", data);
+      } catch (parseError) {
+        console.error("❌ Failed to parse JSON response:", parseError);
+        const textResponse = await response.text();
+        console.log("📄 Raw response text:", textResponse);
+        throw new Error("Invalid JSON response from server");
+      }
 
       if (response.ok && data.success) {
+        console.log("✅ Payment verification successful!");
+        
         // Update payment status
         const updatedBooking = {
           ...parsedBooking,
           paymentStatus: "paid",
+          paymentReference: reference,
+          verifiedAt: new Date().toISOString(),
         };
 
+        console.log("💾 Updating localStorage with:", updatedBooking);
         localStorage.setItem("bookingData", JSON.stringify(updatedBooking));
         setBookingData(updatedBooking);
         setPaymentStatus("success");
+
+        // Clear URL parameters
+        if (typeof window !== "undefined") {
+          console.log("🧹 Clearing URL parameters");
+          window.history.replaceState({}, "", window.location.pathname);
+        }
       } else {
+        console.error("❌ Payment verification failed:");
+        console.error("Response status:", response.status);
+        console.error("Response data:", data);
         setPaymentStatus("failed");
       }
     } catch (error) {
-      console.error("Backend verification failed:", error);
+      console.error("💥 Backend verification failed:");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      setPaymentStatus("error");
       throw error;
     } finally {
+      console.log("🏁 Setting loading to false");
       setLoading(false);
     }
   };
-
 
   return null; // This component just handles the effect, no rendering
 }

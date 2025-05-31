@@ -13,75 +13,7 @@ export default function BookingsPage() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  // Mock data - in a real app, you would fetch this from an API
-  useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      setBookings([
-        {
-          id: "B1234",
-          serviceType: "House Cleaning",
-          date: "2025-04-15T10:00:00",
-          address: "123 Main St, Apartment 4B",
-          price: "₦15,000",
-          status: "confirmed",
-          providerName: "Mary Johnson",
-          providerImage: "https://randomuser.me/api/portraits/women/45.jpg",
-          serviceImage:
-            "https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80",
-        },
-        {
-          id: "B1235",
-          serviceType: "Laundry",
-          date: "2025-04-12T14:30:00",
-          address: "456 Oak Ave",
-          price: "₦8,500",
-          status: "pending",
-          providerName: "Pending Assignment",
-          providerImage: null,
-          serviceImage:
-            "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80",
-        },
-        {
-          id: "B1236",
-          serviceType: "Gardening",
-          date: "2025-04-20T09:00:00",
-          address: "789 Pine St",
-          price: "₦12,000",
-          status: "confirmed",
-          providerName: "James Smith",
-          providerImage: "https://randomuser.me/api/portraits/men/32.jpg",
-          serviceImage:
-            "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        },
-        {
-          id: "B1237",
-          serviceType: "Repairs",
-          date: "2025-04-10T11:00:00",
-          address: "321 Elm St",
-          price: "₦9,500",
-          status: "completed",
-          providerName: "Robert Davis",
-          providerImage: "https://randomuser.me/api/portraits/men/54.jpg",
-          serviceImage:
-            "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80",
-        },
-        {
-          id: "B1238",
-          serviceType: "Move-out Cleaning",
-          date: "2025-04-05T08:00:00",
-          address: "654 Maple Ave",
-          price: "₦25,000",
-          status: "cancelled",
-          providerName: "Sarah Wilson",
-          providerImage: "https://randomuser.me/api/portraits/women/67.jpg",
-          serviceImage:
-            "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80",
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+
 
   // Filter bookings based on active tab and status filter
   const filteredBookings = bookings.filter((booking) => {

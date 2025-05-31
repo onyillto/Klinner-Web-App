@@ -161,7 +161,7 @@ export default function DateTimeSelector({ isOpen, onClose, selectedItems }) {
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop text-black bg-black bg-opacity-50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">

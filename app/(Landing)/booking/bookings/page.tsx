@@ -30,7 +30,7 @@ export default function BookingsPage() {
       }, 15000);
 
       // Get user ID from localStorage or wherever you store it
-      const userData = localStorage.getItem("user");
+      const userData = localStorage.getItem("user_data");
       if (!userData) {
         clearTimeout(timeoutId);
         setError("User not found. Please log in again.");

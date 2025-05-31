@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Head from "next/head";
 
 // Component for loading screen
@@ -211,25 +211,30 @@ function BookingDetails({ bookingData, formatDate, formatTime }) {
 
 // Component for action buttons
 function ActionButtons({ confirmed, paymentStatus, router }) {
+  const handleNavigation = (path) => {
+    // Prevent multiple rapid clicks
+    router.push(path);
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
       {paymentStatus === "failed" && (
         <button
-          onClick={() => router.push("/booking-summary")}
+          onClick={() => handleNavigation("/booking-summary")}
           className="py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium hover:bg-purple-50 transition-colors"
         >
           Try Again
         </button>
       )}
       <button
-        onClick={() => router.push("/")}
+        onClick={() => handleNavigation("/")}
         className="py-3 px-6 bg-purple-600 text-white rounded-xl text-lg font-medium shadow-lg hover:bg-purple-700 transition-colors"
       >
         Return to Home
       </button>
       {confirmed === true && (
         <button
-          onClick={() => router.push("/bookings")}
+          onClick={() => handleNavigation("/bookings")}
           className="py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium hover:bg-purple-50 transition-colors"
         >
           View My Bookings
@@ -266,10 +271,19 @@ export default function BookingConfirmation() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Only proceed if router is ready (prevents SSR issues)
+    const searchParams = useSearchParams();
+
     // Load booking data from localStorage
     const loadBookingData = () => {
       try {
         console.log("🔍 Loading booking data from localStorage...");
+
+        // Get reference from URL if present
+        const reference = searchParams.get("reference");
+        if (reference) {
+          console.log("📋 Payment reference from URL:", reference);
+        }
 
         const confirmedBooking = localStorage.getItem("bookingData");
         if (!confirmedBooking) {
@@ -281,6 +295,11 @@ export default function BookingConfirmation() {
         const parsedBooking = JSON.parse(confirmedBooking);
         console.log("✅ Booking data loaded:", parsedBooking);
 
+        // If we have a reference from URL, update the booking data
+        if (reference && !parsedBooking.paymentReference) {
+          parsedBooking.paymentReference = reference;
+        }
+
         setBookingData(parsedBooking);
         setLoading(false);
       } catch (error) {
@@ -290,7 +309,7 @@ export default function BookingConfirmation() {
     };
 
     loadBookingData();
-  }, []);
+  }, [useSearchParams()]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "";

@@ -4,12 +4,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Head from "next/head";
-import Cookies from "js-cookie"; // Make sure to install this package: npm install js-cookie
+import Cookies from "js-cookie";
 
 export default function BookingSummary() {
   const router = useRouter();
   const [bookingData, setBookingData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     // Load booking data from localStorage
@@ -61,7 +62,9 @@ export default function BookingSummary() {
   };
 
   const handleConfirmBooking = async () => {
-    setLoading(true);
+    if (isProcessing) return; // Prevent double clicks
+
+    setIsProcessing(true);
 
     try {
       // Retrieve the auth token from cookies
@@ -69,7 +72,7 @@ export default function BookingSummary() {
 
       if (!authToken) {
         alert("Authentication required. Please log in again.");
-        setLoading(false);
+        setIsProcessing(false);
         return;
       }
 
@@ -78,73 +81,153 @@ export default function BookingSummary() {
 
       if (!userId) {
         alert("User ID not found. Please log in again.");
-        setLoading(false);
+        setIsProcessing(false);
         return;
       }
 
-      // Calculate service rate
-      const basePrice = 5000;
-      const pricePerItem = 2000;
-      const totalItems = bookingData.areas?.length || 0;
-      const serviceRate = ((basePrice + totalItems * pricePerItem) / 100).toFixed(2);
-
+      // Prepare service data for your createCleaningService endpoint
       const serviceData = {
         user_id: userId,
         serviceName: bookingData.serviceName || "Cleaning",
-        serviceCategory: bookingData.serviceCategory || "Standard Home Cleaning",
+        serviceCategory:
+          bookingData.serviceCategory || "Standard Home Cleaning",
         areas: bookingData.areas || [],
         bookingDate: bookingData.bookingDate,
         bookingTime: bookingData.bookingTime,
         location: bookingData.location,
-        serviceRate,
       };
 
-      // Make the API call to your backend
+      console.log("Creating service with data:", serviceData);
+
+      // Call YOUR createCleaningService endpoint (FIXED URL)
       const response = await fetch(
-        "https://klinner.onrender.com/api/v1/service/create-service",
+        "https://klinner.onrender.com/api/v1/service/create", // Fixed endpoint URL
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
+          credentials: "include",
           body: JSON.stringify(serviceData),
         }
       );
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        alert(`Server error: ${response.status} ${errorText}`);
-        setLoading(false);
-        return;
+        const errorData = await response.json().catch(() => null);
+        const errorMessage =
+          errorData?.message || `Server error: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      const { authorization_url, access_code, reference } = data.data.payment;
-      const serviceId = data.data.cleaningService._id;
+      console.log("Backend response:", data);
 
-      // Store booking data in localStorage so the confirmation page can access it
-      const confirmedBooking = {
-        ...bookingData,
-        id: serviceId,
-        confirmed: true,
-        paymentStatus: "pending",
-        paymentReference: reference,
-      };
-      
-      localStorage.setItem("bookingData", JSON.stringify(confirmedBooking));
+      if (data.success && data.data) {
+        const { cleaningService, payment } = data.data;
+        const { authorization_url, access_code, reference } = payment;
 
-      // Redirect to payment page
-      window.location.href = authorization_url;
+        // Update booking data with backend response
+        const confirmedBooking = {
+          ...bookingData,
+          // Service details from backend
+          id: cleaningService._id,
+          serviceId: cleaningService._id,
+          serviceName: cleaningService.serviceName,
+          serviceCategory: cleaningService.serviceCategory,
+          areas: cleaningService.areas,
+          serviceRate: cleaningService.serviceRate,
+
+          // Booking details from backend
+          bookingDate: cleaningService.booking.bookingDate,
+          bookingTime: cleaningService.booking.bookingTime,
+          location: cleaningService.booking.location,
+
+          // Payment details
+          paymentStatus: "pending",
+          paymentReference: reference,
+          authorization_url: authorization_url,
+          access_code: access_code,
+
+          // Metadata
+          confirmed: true,
+          createdAt: new Date().toISOString(),
+        };
+
+        console.log("Storing updated booking data:", confirmedBooking);
+
+        // Store updated booking data
+        localStorage.setItem("bookingData", JSON.stringify(confirmedBooking));
+
+        // Redirect to Paystack payment
+        console.log("Redirecting to payment URL:", authorization_url);
+        window.location.href = authorization_url;
+      } else {
+        throw new Error(data.message || "Failed to create booking");
+      }
     } catch (error) {
       console.error("Error during booking confirmation:", error);
-      setLoading(false);
-      alert(`Booking failed: ${error.message}`);
+      setIsProcessing(false);
+
+      // Show user-friendly error message
+      let errorMessage = "Booking failed. Please try again.";
+
+      if (error.message.includes("User not found")) {
+        errorMessage = "User account not found. Please log in again.";
+      } else if (error.message.includes("All fields are required")) {
+        errorMessage = "Please fill in all required fields.";
+      } else if (error.message.includes("Network")) {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (error.message.includes("timeout")) {
+        errorMessage = "Request timeout. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      alert(errorMessage);
     }
   };
 
   const handleEditBooking = () => {
     router.push("/house-cleaning");
+  };
+
+  // Calculate estimated time
+  const calculateEstimatedTime = () => {
+    if (!bookingData?.areas) return "N/A";
+
+    const totalItems = bookingData.areas.length;
+    const baseTime = 60; // 60 minutes base time
+    const timePerItem = 30; // 30 minutes per item
+    const totalMinutes = baseTime + totalItems * timePerItem;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    return `${hours}h ${minutes > 0 ? `${minutes}m` : ""}`;
+  };
+
+  // Fixed: Calculate estimated price (returns number, not string)
+  const calculatePrice = () => {
+    if (!bookingData?.areas) return 0;
+
+    const basePrice = 5000; // ₦5000 base price
+    const pricePerItem = 2000; // ₦2000 per area
+    const totalItems = bookingData.areas.length;
+
+    return basePrice + totalItems * pricePerItem; // Return number, not string
+  };
+
+  // Helper function to format price as string
+  const formatPrice = (price) => {
+    return price.toLocaleString("en-US");
+  };
+
+  // Helper function to calculate areas fee
+  const calculateAreasPrice = () => {
+    if (!bookingData?.areas) return 0;
+    return bookingData.areas.length * 2000;
   };
 
   if (loading) {
@@ -192,30 +275,9 @@ export default function BookingSummary() {
     );
   }
 
-  // Calculate estimated time
-  const calculateEstimatedTime = () => {
-    if (!bookingData.areas) return "N/A";
-
-    const totalItems = bookingData.areas.length;
-    const baseTime = 60; // 60 minutes base time
-    const timePerItem = 30; // 30 minutes per item
-    const totalMinutes = baseTime + totalItems * timePerItem;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours}h ${minutes > 0 ? `${minutes}m` : ""}`;
-  };
-
-  // Calculate estimated price
-  const calculatePrice = () => {
-    if (!bookingData.areas) return 0;
-
-    const basePrice = 500000; // Base price in cents (₦50)
-    const pricePerItem = 200000; // Price per area in cents (₦20)
-    const totalItems = bookingData.areas.length;
-
-    return ((basePrice + totalItems * pricePerItem) / 100).toFixed(2);
-  };
+  // Calculate values for display
+  const totalPrice = calculatePrice();
+  const areasPrice = calculateAreasPrice();
 
   return (
     <>
@@ -436,17 +498,17 @@ export default function BookingSummary() {
               <div className="border-b pb-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Base Fee</span>
-                  <span className="font-medium text-gray-900">₦5000.00</span>
+                  <span className="font-medium text-gray-900">₦5,000.00</span>
                 </div>
               </div>
 
               <div className="border-b pb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">
-                    Areas Fee ({bookingData.areas?.length || 0} × ₦2000.00)
+                    Areas Fee ({bookingData.areas?.length || 0} × ₦2,000.00)
                   </span>
                   <span className="font-medium text-gray-900">
-                    ₦{(((bookingData.areas?.length || 0) * 2000)).toFixed(2)}
+                    ₦{formatPrice(areasPrice)}.00
                   </span>
                 </div>
               </div>
@@ -455,7 +517,7 @@ export default function BookingSummary() {
                 <div className="flex justify-between">
                   <span className="text-gray-800 font-semibold">Total</span>
                   <span className="font-bold text-purple-600 text-xl">
-                    ₦{calculatePrice()}
+                    ₦{formatPrice(totalPrice)}
                   </span>
                 </div>
               </div>
@@ -468,20 +530,55 @@ export default function BookingSummary() {
           <div className="max-w-3xl mx-auto flex flex-col md:flex-row gap-3">
             <button
               onClick={handleEditBooking}
-              className="py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium hover:bg-purple-50 transition-colors md:flex-1"
+              disabled={isProcessing}
+              className={`py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium transition-colors md:flex-1 ${
+                isProcessing
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-purple-50"
+              }`}
             >
               Edit Booking
             </button>
             <button
               onClick={handleConfirmBooking}
-              className="py-3 px-6 bg-purple-600 text-white rounded-xl text-lg font-medium shadow-lg hover:bg-purple-700 transition-colors md:flex-1"
+              disabled={isProcessing}
+              className={`py-3 px-6 bg-purple-600 text-white rounded-xl text-lg font-medium shadow-lg transition-colors md:flex-1 ${
+                isProcessing
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-purple-700"
+              }`}
             >
-              Confirm & Pay
+              {isProcessing ? (
+                <span className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                "Confirm & Pay"
+              )}
             </button>
           </div>
         </div>
       </div>
     </>
   );
-
 }

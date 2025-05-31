@@ -75,8 +75,9 @@ function BookingVerification({
 
       console.log("Verifying payment with backend:", reference);
 
+      // Call YOUR verify payment endpoint (FIXED URL)
       const response = await fetch(
-        `https://klinner.onrender.com/api/v1/payments/verify`,
+        `https://klinner.onrender.com/api/v1/service/verify-payment`, // Fixed endpoint URL
         {
           method: "POST",
           headers: {
@@ -92,11 +93,21 @@ function BookingVerification({
       console.log("Backend verification response:", data);
 
       if (response.ok && data.success) {
-        // Update payment status
+        // Update payment status with data from backend
         const updatedBooking = {
           ...parsedBooking,
           paymentStatus: "paid",
           paymentReference: reference,
+          verifiedAt: new Date().toISOString(),
+          // Include additional data from backend response if available
+          serviceId: data.data?.service_id || parsedBooking.serviceId,
+          amountPaid: data.data?.amount_paid || parsedBooking.serviceRate,
+          paymentMethod: data.data?.payment_method || "card",
+          verificationDetails: {
+            verified_at: data.data?.verified_at,
+            payment_method: data.data?.payment_method,
+            amount_paid: data.data?.amount_paid,
+          },
         };
 
         localStorage.setItem("bookingData", JSON.stringify(updatedBooking));
@@ -109,11 +120,30 @@ function BookingVerification({
         }
       } else {
         console.error("Payment verification failed:", data);
-        setPaymentStatus("failed");
+
+        // Handle specific error cases
+        if (data.message?.includes("Transaction not found")) {
+          setPaymentStatus("not_found");
+        } else if (data.message?.includes("amount does not match")) {
+          setPaymentStatus("amount_mismatch");
+        } else if (data.message?.includes("Payment not successful")) {
+          setPaymentStatus("failed");
+        } else {
+          setPaymentStatus("failed");
+        }
       }
     } catch (error) {
       console.error("Backend verification failed:", error);
-      setPaymentStatus("error");
+
+      // Handle network errors
+      if (error.message?.includes("timeout")) {
+        setPaymentStatus("timeout");
+      } else if (error.message?.includes("Network")) {
+        setPaymentStatus("network_error");
+      } else {
+        setPaymentStatus("error");
+      }
+
       throw error;
     } finally {
       setLoading(false);
@@ -139,7 +169,22 @@ function LoadingScreen() {
 }
 
 // Component for error state
-function ErrorScreen({ error, router }) {
+function ErrorScreen({ error, router, paymentStatus }) {
+  const getErrorMessage = (status) => {
+    switch (status) {
+      case "timeout":
+        return "Payment verification timed out. Please try again or contact support if payment was deducted.";
+      case "network_error":
+        return "Network error during verification. Please check your connection and try again.";
+      case "not_found":
+        return "Transaction not found. Please contact support with your payment reference.";
+      case "amount_mismatch":
+        return "Payment amount mismatch detected. Please contact support immediately.";
+      default:
+        return error || "Something went wrong while verifying your payment.";
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md">
@@ -159,9 +204,7 @@ function ErrorScreen({ error, router }) {
         <h2 className="text-xl font-bold text-gray-900 mb-2">
           Payment Verification Error
         </h2>
-        <p className="text-gray-600 mb-4">
-          {error || "Something went wrong while verifying your payment."}
-        </p>
+        <p className="text-gray-600 mb-4">{getErrorMessage(paymentStatus)}</p>
         <div className="flex flex-col gap-2">
           <button
             onClick={() => window.location.reload()}
@@ -239,7 +282,14 @@ function StatusIcon({ status }) {
     );
   }
 
-  if (status === "failed" || status === "error") {
+  if (
+    status === "failed" ||
+    status === "error" ||
+    status === "timeout" ||
+    status === "network_error" ||
+    status === "not_found" ||
+    status === "amount_mismatch"
+  ) {
     return (
       <div className="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-6">
         <svg
@@ -324,7 +374,12 @@ function BookingDetails({
             className={`font-medium ${
               paymentStatus === "success"
                 ? "text-green-600"
-                : paymentStatus === "failed" || paymentStatus === "error"
+                : paymentStatus === "failed" ||
+                  paymentStatus === "error" ||
+                  paymentStatus === "timeout" ||
+                  paymentStatus === "network_error" ||
+                  paymentStatus === "not_found" ||
+                  paymentStatus === "amount_mismatch"
                 ? "text-red-600"
                 : "text-yellow-600"
             }`}
@@ -335,6 +390,14 @@ function BookingDetails({
               ? "Failed"
               : paymentStatus === "error"
               ? "Error"
+              : paymentStatus === "timeout"
+              ? "Timeout"
+              : paymentStatus === "network_error"
+              ? "Network Error"
+              : paymentStatus === "not_found"
+              ? "Not Found"
+              : paymentStatus === "amount_mismatch"
+              ? "Amount Mismatch"
               : "Pending"}
           </span>
         </div>
@@ -342,6 +405,7 @@ function BookingDetails({
           <span className="text-gray-800 font-semibold">Booking ID:</span>
           <span className="font-medium text-purple-600">
             {bookingData.id ||
+              bookingData.serviceId ||
               `#BK${Math.floor(Math.random() * 900000) + 100000}`}
           </span>
         </div>
@@ -353,6 +417,42 @@ function BookingDetails({
             </span>
           </div>
         )}
+        {bookingData.verificationDetails && (
+          <div className="pt-2 border-t">
+            <div className="text-sm text-gray-500 mb-2">
+              Verification Details:
+            </div>
+            {bookingData.verificationDetails.amount_paid && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Amount Paid:</span>
+                <span className="font-medium text-gray-900">
+                  ₦
+                  {parseFloat(
+                    bookingData.verificationDetails.amount_paid
+                  ).toLocaleString()}
+                </span>
+              </div>
+            )}
+            {bookingData.verificationDetails.payment_method && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Payment Method:</span>
+                <span className="font-medium text-gray-900 capitalize">
+                  {bookingData.verificationDetails.payment_method}
+                </span>
+              </div>
+            )}
+            {bookingData.verificationDetails.verified_at && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Verified At:</span>
+                <span className="font-medium text-gray-900">
+                  {new Date(
+                    bookingData.verificationDetails.verified_at
+                  ).toLocaleString()}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -360,9 +460,18 @@ function BookingDetails({
 
 // Component for action buttons
 function ActionButtons({ paymentStatus, router }) {
+  const isFailedStatus = [
+    "failed",
+    "error",
+    "timeout",
+    "network_error",
+    "not_found",
+    "amount_mismatch",
+  ].includes(paymentStatus);
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      {(paymentStatus === "failed" || paymentStatus === "error") && (
+      {isFailedStatus && (
         <button
           onClick={() => router.push("/booking-summary")}
           className="py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium hover:bg-purple-50 transition-colors"
@@ -397,6 +506,14 @@ function getStatusTitle(status) {
       return "Payment Failed";
     case "error":
       return "Verification Error";
+    case "timeout":
+      return "Verification Timeout";
+    case "network_error":
+      return "Network Error";
+    case "not_found":
+      return "Transaction Not Found";
+    case "amount_mismatch":
+      return "Payment Amount Mismatch";
     default:
       return "Booking Status Pending";
   }
@@ -405,13 +522,21 @@ function getStatusTitle(status) {
 function getStatusMessage(status) {
   switch (status) {
     case "success":
-      return "Your cleaning service has been successfully booked and paid for";
+      return "Your cleaning service has been successfully booked and paid for. You will receive a confirmation email shortly.";
     case "failed":
-      return "We couldn't complete your payment. Please try again.";
+      return "We couldn't complete your payment. Please try again or use a different payment method.";
     case "error":
-      return "There was an error verifying your payment. Please contact support.";
+      return "There was an error verifying your payment. Please contact support if payment was deducted.";
+    case "timeout":
+      return "Payment verification timed out. Please check if payment was deducted and contact support if needed.";
+    case "network_error":
+      return "Network error occurred during verification. Please check your connection and try again.";
+    case "not_found":
+      return "Transaction not found in our records. Please contact support with your payment reference.";
+    case "amount_mismatch":
+      return "Payment amount mismatch detected. Please contact support immediately for assistance.";
     default:
-      return "Your booking has been received but payment status is pending.";
+      return "Your booking has been received but payment status is pending verification.";
   }
 }
 
@@ -487,7 +612,13 @@ export default function BookingConfirmation() {
 
   // Error boundary
   if (error) {
-    return <ErrorScreen error={error} router={router} />;
+    return (
+      <ErrorScreen
+        error={error}
+        router={router}
+        paymentStatus={paymentStatus}
+      />
+    );
   }
 
   if (loading) {

@@ -1,8 +1,115 @@
+// pages/booking-confirmation.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Head from "next/head";
+import Cookies from "js-cookie";
+
+// Create a separate component that uses searchParams
+function BookingVerification({
+  bookingData,
+  setBookingData,
+  setPaymentStatus,
+  setLoading,
+}) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const verifyPayment = async () => {
+      try {
+        // Check if we have a reference from Paystack redirect
+        const reference = searchParams.get("reference");
+
+        // If no reference in URL but booking shows paid, assume it's already verified
+        if (!reference) {
+          setPaymentStatus(
+            bookingData.paymentStatus === "paid" ? "success" : "pending"
+          );
+          setLoading(false);
+          return;
+        }
+
+        // Verify payment status with backend
+        await verifyPaymentWithBackend(reference, bookingData);
+      } catch (error) {
+        console.error("Error verifying payment:", error);
+        setPaymentStatus("error");
+        setLoading(false);
+      }
+    };
+
+    if (bookingData) {
+      verifyPayment();
+    }
+  }, [searchParams, bookingData, setPaymentStatus, setLoading]);
+
+// Replace your verifyPaymentWithBackend function in BookingVerification with this:
+
+const verifyPaymentWithBackend = async (reference, parsedBooking) => {
+  try {
+    const authToken = Cookies.get("auth_token");
+
+    console.log("🔍 DEBUGGING PAYMENT VERIFICATION");
+    console.log("📞 Calling backend with reference:", reference);
+    console.log("🔑 Auth token exists:", !!authToken);
+    console.log("📦 Booking data:", parsedBooking);
+
+    const response = await fetch(
+      `https://klinner.onrender.com/api/v1/service/verify-payment`, // ✅ FIXED URL
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ reference }),
+      }
+    );
+
+    console.log("🌐 Response status:", response.status);
+    console.log("🌐 Response ok:", response.ok);
+
+    const data = await response.json();
+    console.log("📄 Backend response:", data);
+
+    if (response.ok && data.success) {
+      console.log("✅ Payment verification successful!");
+      
+      // Update payment status
+      const updatedBooking = {
+        ...parsedBooking,
+        paymentStatus: "paid",
+        paymentReference: reference,
+        verifiedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem("bookingData", JSON.stringify(updatedBooking));
+      setBookingData(updatedBooking);
+      setPaymentStatus("success");
+
+      // Clear URL parameters
+      if (typeof window !== "undefined") {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    } else {
+      console.error("❌ Payment verification failed:", data);
+      setPaymentStatus("failed");
+    }
+  } catch (error) {
+    console.error("💥 Backend verification failed:", error);
+    setPaymentStatus("error");
+    throw error;
+  } finally {
+    console.log("🏁 Setting loading to false");
+    setLoading(false);
+  }
+};
+
+
+  return null; // This component just handles the effect, no rendering
+}
 
 // Component for loading screen
 function LoadingScreen() {
@@ -10,11 +117,12 @@ function LoadingScreen() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-700">Loading your booking details...</p>
+        <p className="text-gray-700">Verifying your payment...</p>
       </div>
     </div>
   );
 }
+
 
 // Component for no booking found
 function NoBookingFound({ router }) {
@@ -52,8 +160,8 @@ function NoBookingFound({ router }) {
 }
 
 // Component for status icon
-function StatusIcon({ confirmed, paymentStatus }) {
-  if (confirmed === true) {
+function StatusIcon({ status }) {
+  if (status === "success") {
     return (
       <div className="w-20 h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-6">
         <svg
@@ -74,7 +182,7 @@ function StatusIcon({ confirmed, paymentStatus }) {
     );
   }
 
-  if (paymentStatus === "failed") {
+  if (status === "failed") {
     return (
       <div className="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-6">
         <svg
@@ -95,7 +203,6 @@ function StatusIcon({ confirmed, paymentStatus }) {
     );
   }
 
-  // Default for pending or other statuses
   return (
     <div className="w-20 h-20 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mx-auto mb-6">
       <svg
@@ -117,7 +224,12 @@ function StatusIcon({ confirmed, paymentStatus }) {
 }
 
 // Component for booking details
-function BookingDetails({ bookingData, formatDate, formatTime }) {
+function BookingDetails({
+  bookingData,
+  paymentStatus,
+  formatDate,
+  formatTime,
+}) {
   return (
     <div className="bg-gray-50 rounded-lg p-6 text-left mb-8">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -127,7 +239,7 @@ function BookingDetails({ bookingData, formatDate, formatTime }) {
         <div className="flex justify-between">
           <span className="text-gray-600">Service:</span>
           <span className="font-medium text-gray-900">
-            {bookingData.serviceCategory || bookingData.serviceName}
+            {bookingData.serviceCategory}
           </span>
         </div>
         <div className="flex justify-between">
@@ -150,33 +262,19 @@ function BookingDetails({ bookingData, formatDate, formatTime }) {
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-600">Booking Status:</span>
-          <span
-            className={`font-medium ${
-              bookingData.confirmed === true
-                ? "text-green-600"
-                : "text-yellow-600"
-            }`}
-          >
-            {bookingData.confirmed === true
-              ? "Confirmed ✓"
-              : "Pending Confirmation"}
-          </span>
-        </div>
-        <div className="flex justify-between">
           <span className="text-gray-600">Payment Status:</span>
           <span
             className={`font-medium ${
-              bookingData.paymentStatus === "paid"
+              paymentStatus === "success"
                 ? "text-green-600"
-                : bookingData.paymentStatus === "failed"
+                : paymentStatus === "failed"
                 ? "text-red-600"
                 : "text-yellow-600"
             }`}
           >
-            {bookingData.paymentStatus === "paid"
-              ? "Paid ✓"
-              : bookingData.paymentStatus === "failed"
+            {paymentStatus === "success"
+              ? "Paid"
+              : paymentStatus === "failed"
               ? "Failed"
               : "Pending"}
           </span>
@@ -196,45 +294,32 @@ function BookingDetails({ bookingData, formatDate, formatTime }) {
             </span>
           </div>
         )}
-        {bookingData.totalAmount && (
-          <div className="flex justify-between pt-2 border-t">
-            <span className="text-gray-600">Total Amount:</span>
-            <span className="font-medium text-gray-900">
-              ₦{bookingData.totalAmount?.toLocaleString()}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
 // Component for action buttons
-function ActionButtons({ confirmed, paymentStatus, router }) {
-  const handleNavigation = (path) => {
-    // Prevent multiple rapid clicks
-    router.push(path);
-  };
-
+function ActionButtons({ paymentStatus, router }) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
       {paymentStatus === "failed" && (
         <button
-          onClick={() => handleNavigation("/booking-summary")}
+          onClick={() => router.push("/booking-summary")}
           className="py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium hover:bg-purple-50 transition-colors"
         >
           Try Again
         </button>
       )}
       <button
-        onClick={() => handleNavigation("/")}
+        onClick={() => router.push("/")}
         className="py-3 px-6 bg-purple-600 text-white rounded-xl text-lg font-medium shadow-lg hover:bg-purple-700 transition-colors"
       >
         Return to Home
       </button>
-      {confirmed === true && (
+      {paymentStatus === "success" && (
         <button
-          onClick={() => handleNavigation("/bookings")}
+          onClick={() => router.push("/bookings")}
           className="py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium hover:bg-purple-50 transition-colors"
         >
           View My Bookings
@@ -245,71 +330,54 @@ function ActionButtons({ confirmed, paymentStatus, router }) {
 }
 
 // Helper functions
-function getStatusTitle(confirmed, paymentStatus) {
-  if (confirmed === true) {
-    return "Booking Confirmed!";
+function getStatusTitle(status) {
+  switch (status) {
+    case "success":
+      return "Booking Confirmed!";
+    case "failed":
+      return "Payment Failed";
+    default:
+      return "Booking Status Pending";
   }
-  if (paymentStatus === "failed") {
-    return "Payment Failed";
-  }
-  return "Booking Pending Confirmation";
 }
 
-function getStatusMessage(confirmed, paymentStatus) {
-  if (confirmed === true) {
-    return "Your cleaning service has been successfully booked and confirmed";
+function getStatusMessage(status) {
+  switch (status) {
+    case "success":
+      return "Your cleaning service has been successfully booked and paid for";
+    case "failed":
+      return "We couldn't complete your payment. Please try again.";
+    default:
+      return "Your booking has been received but payment status is pending.";
   }
-  if (paymentStatus === "failed") {
-    return "We couldn't complete your payment. Please try again.";
-  }
-  return "Your booking has been received and is pending confirmation.";
 }
 
 export default function BookingConfirmation() {
   const router = useRouter();
   const [bookingData, setBookingData] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState("checking");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only proceed if router is ready (prevents SSR issues)
-    const searchParams = useSearchParams();
-
     // Load booking data from localStorage
     const loadBookingData = () => {
       try {
-        console.log("🔍 Loading booking data from localStorage...");
-
-        // Get reference from URL if present
-        const reference = searchParams.get("reference");
-        if (reference) {
-          console.log("📋 Payment reference from URL:", reference);
-        }
-
         const confirmedBooking = localStorage.getItem("bookingData");
         if (!confirmedBooking) {
-          console.log("❌ No booking data found in localStorage");
           setLoading(false);
           return;
         }
 
         const parsedBooking = JSON.parse(confirmedBooking);
-        console.log("✅ Booking data loaded:", parsedBooking);
-
-        // If we have a reference from URL, update the booking data
-        if (reference && !parsedBooking.paymentReference) {
-          parsedBooking.paymentReference = reference;
-        }
-
         setBookingData(parsedBooking);
-        setLoading(false);
       } catch (error) {
-        console.error("💥 Error loading booking data:", error);
+        console.error("Error loading booking data:", error);
         setLoading(false);
       }
     };
 
     loadBookingData();
-  }, [useSearchParams()]);
+  }, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -342,14 +410,11 @@ export default function BookingConfirmation() {
     return <NoBookingFound router={router} />;
   }
 
-  const paymentStatus = bookingData.paymentStatus;
-  const confirmed = bookingData.confirmed;
-
   return (
     <>
       <Head>
-        <title>Booking Confirmation | Klinner</title>
-        <meta name="description" content="Your booking confirmation details" />
+        <title>Booking Confirmation | Home Services</title>
+        <meta name="description" content="Your booking status" />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -360,38 +425,35 @@ export default function BookingConfirmation() {
 
         <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-8">
           <div className="bg-white rounded-xl shadow-sm p-8 text-center mt-12">
-            <StatusIcon confirmed={confirmed} paymentStatus={paymentStatus} />
+            <StatusIcon status={paymentStatus} />
 
             <h1 className="text-3xl font-bold text-gray-900 mb-3">
-              {getStatusTitle(confirmed, paymentStatus)}
+              {getStatusTitle(paymentStatus)}
             </h1>
             <p className="text-gray-600 mb-8 text-lg">
-              {getStatusMessage(confirmed, paymentStatus)}
+              {getStatusMessage(paymentStatus)}
             </p>
 
             <BookingDetails
               bookingData={bookingData}
+              paymentStatus={paymentStatus}
               formatDate={formatDate}
               formatTime={formatTime}
             />
 
-            <ActionButtons
-              confirmed={confirmed}
-              paymentStatus={paymentStatus}
-              router={router}
-            />
-
-            {/* Additional info for confirmed bookings */}
-            {confirmed === true && (
-              <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-                <p className="text-blue-800 text-sm">
-                  📧 Check your email for booking confirmation and cleaner
-                  details
-                </p>
-              </div>
-            )}
+            <ActionButtons paymentStatus={paymentStatus} router={router} />
           </div>
         </div>
+
+        {/* Wrap the component that uses searchParams in Suspense */}
+        <Suspense fallback={null}>
+          <BookingVerification
+            bookingData={bookingData}
+            setBookingData={setBookingData}
+            setPaymentStatus={setPaymentStatus}
+            setLoading={setLoading}
+          />
+        </Suspense>
       </div>
     </>
   );

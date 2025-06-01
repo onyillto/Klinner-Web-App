@@ -108,9 +108,6 @@ export default function BookingsPage() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
-          // Alternative header format if your API expects different format:
-          // "x-auth-token": authToken,
-          // "token": authToken,
         },
       });
 
@@ -139,26 +136,33 @@ export default function BookingsPage() {
           id: item._id,
           serviceType: item.serviceCategory,
           serviceName: item.serviceName,
-          status: item.booking.progress, // This will be 'pending', 'confirmed', 'completed', 'cancelled'
+          status: item.booking.progress,
           paymentStatus: item.booking.paymentStatus,
           date: item.booking.bookingDate,
           time: item.booking.bookingTime,
           address: item.booking.location,
-          price: `₦${(item.serviceRate / 100).toLocaleString()}`, // Convert from kobo to naira
+          price: `₦${item.serviceRate.toLocaleString()}`,
           areas: item.areas || [],
-          providerName: "Klinner Professional", // Default since not in API
-          providerImage: null, // Not provided in API
-          serviceImage: null, // Not provided in API
+          providerName: "Klinner Professional",
+          providerImage: null,
+          serviceImage: null,
           createdAt: item.createdAt,
           service_id: item.service_id,
-          rawBookingData: item.booking, // Keep original booking data for debugging
+          rawBookingData: item.booking,
         }));
 
         console.log("🔄 Transformed bookings:", transformedBookings);
         console.log("📊 Booking statuses found:", [
           ...new Set(transformedBookings.map((b) => b.status)),
         ]);
-        setBookings(transformedBookings);
+
+        // Sort bookings by creation date (newest first)
+        const sortedBookings = transformedBookings.sort((a, b) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+        console.log("📅 Bookings sorted by newest first");
+        setBookings(sortedBookings);
       } else {
         setError(result.message || "Failed to fetch bookings");
       }
@@ -184,26 +188,13 @@ export default function BookingsPage() {
     }
   };
 
-  // Filter bookings based on status filter only (no date filtering)
+  // Filter bookings based on status filter only
   const filteredBookings = bookings.filter((booking) => {
-    // Only filter by status
     if (filterStatus !== "all" && booking.status !== filterStatus) {
       return false;
     }
     return true;
   });
-
-  // Debug logging to help understand filtering
-  console.log("🔍 Current filter status:", filterStatus);
-  console.log("📊 All bookings count:", bookings.length);
-  console.log("🎯 Filtered bookings count:", filteredBookings.length);
-  console.log("📋 Available statuses:", [
-    ...new Set(bookings.map((b) => b.status)),
-  ]);
-  console.log(
-    "🔎 Sample booking statuses:",
-    bookings.slice(0, 3).map((b) => ({ id: b.id, status: b.status }))
-  );
 
   // Format date for display
   const formatBookingDate = (dateString) => {
@@ -229,15 +220,17 @@ export default function BookingsPage() {
     return `${hour - 12}:${minutes} PM`;
   };
 
-  // Get status badge color
+  // Get status badge color with support for "confirmed" status
   const getStatusColor = (status) => {
     switch (status) {
-      case "confirmed":
-        return "bg-green-100 text-green-800";
       case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "completed":
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "in-progress":
         return "bg-blue-100 text-blue-800";
+      case "completed":
+        return "bg-purple-100 text-purple-800";
       case "cancel":
       case "cancelled":
         return "bg-red-100 text-red-800";
@@ -254,13 +247,11 @@ export default function BookingsPage() {
   // Handle booking actions
   const handleCancelBooking = async (bookingId) => {
     if (confirm("Are you sure you want to cancel this booking?")) {
-      // Implement cancel booking API call
       console.log("Cancelling booking:", bookingId);
     }
   };
 
   const handleRescheduleBooking = (bookingId) => {
-    // Navigate to reschedule page
     router.push(`/bookings/${bookingId}/reschedule`);
   };
 
@@ -300,7 +291,6 @@ export default function BookingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* SEO metadata */}
       <title>My Bookings | Klinner</title>
       <meta
         name="description"
@@ -330,7 +320,7 @@ export default function BookingsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-          {/* Status Filter */}
+          {/* Status Filter - NO CONFIRMED FILTER */}
           <div className="flex flex-wrap gap-2 mb-6">
             <button
               onClick={() => setFilterStatus("all")}
@@ -351,17 +341,6 @@ export default function BookingsPage() {
               }`}
             >
               Pending ({bookings.filter((b) => b.status === "pending").length})
-            </button>
-            <button
-              onClick={() => setFilterStatus("confirmed")}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                filterStatus === "confirmed"
-                  ? "bg-purple-600 text-white border-purple-600"
-                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
-              }`}
-            >
-              Confirmed (
-              {bookings.filter((b) => b.status === "confirmed").length})
             </button>
             <button
               onClick={() => setFilterStatus("completed")}
@@ -464,6 +443,8 @@ export default function BookingsPage() {
                             >
                               {booking.status === "cancel"
                                 ? "Cancelled"
+                                : booking.status === "in-progress"
+                                ? "In Progress"
                                 : booking.status.charAt(0).toUpperCase() +
                                   booking.status.slice(1)}
                             </span>
@@ -563,23 +544,23 @@ export default function BookingsPage() {
                           View Details
                         </button>
 
-                        {booking.status === "confirmed" && (
-                          <button
-                            onClick={() => handleRescheduleBooking(booking.id)}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                          >
-                            Reschedule
-                          </button>
-                        )}
-
-                        {(booking.status === "confirmed" ||
-                          booking.status === "pending") && (
-                          <button
-                            onClick={() => handleCancelBooking(booking.id)}
-                            className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
-                          >
-                            Cancel Booking
-                          </button>
+                        {booking.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() =>
+                                handleRescheduleBooking(booking.id)
+                              }
+                              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                              Reschedule
+                            </button>
+                            <button
+                              onClick={() => handleCancelBooking(booking.id)}
+                              className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+                            >
+                              Cancel Booking
+                            </button>
+                          </>
                         )}
 
                         {booking.status === "completed" && (
@@ -597,7 +578,6 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      {/* Import Bottom Navigation & Desktop Sidebar */}
       <BottomNavigation />
     </div>
   );

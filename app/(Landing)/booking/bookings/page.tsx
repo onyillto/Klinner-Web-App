@@ -67,17 +67,51 @@ export default function BookingsPage() {
 
       // Fix API URL - Update this to your actual API base URL
       const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_URL || "https://klinner.onrender.com"; // Replace with your actual API URL
+        process.env.NEXT_PUBLIC_API_URL || "https://api.klinner.com"; // Replace with your actual API URL
       const apiUrl = `${API_BASE_URL}/api/v1/user/services/${userId}`;
 
       console.log("📡 Making API call to:", apiUrl);
+
+      // Get auth token from cookie or localStorage
+      let authToken = null;
+
+      // Try to get token from cookie first
+      if (typeof document !== "undefined") {
+        const cookies = document.cookie.split(";");
+        const authCookie = cookies.find((cookie) =>
+          cookie.trim().startsWith("auth_token=")
+        );
+        if (authCookie) {
+          authToken = authCookie.split("=")[1];
+        }
+      }
+
+      // Fallback to localStorage if no cookie
+      if (!authToken && typeof window !== "undefined" && window.localStorage) {
+        authToken =
+          localStorage.getItem("auth_token") || localStorage.getItem("token");
+      }
+
+      if (!authToken) {
+        clearTimeout(timeoutId);
+        setError("Authentication required. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
+      console.log(
+        "🔐 Using auth token:",
+        authToken ? "Token found" : "No token"
+      );
 
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${authToken}`,
+          // Alternative header format if your API expects different format:
+          // "x-auth-token": authToken,
+          // "token": authToken,
         },
       });
 

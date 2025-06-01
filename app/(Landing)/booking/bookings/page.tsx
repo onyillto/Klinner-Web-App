@@ -29,23 +29,45 @@ export default function BookingsPage() {
         );
       }, 15000);
 
-      // Get user ID from localStorage or wherever you store it
-      const userData = localStorage.getItem("user_data");
-      if (!userData) {
+      // Get user ID with better error handling
+      let userData, user, userId;
+
+      if (typeof window !== "undefined" && window.localStorage) {
+        try {
+          userData = localStorage.getItem("user_data");
+          if (!userData) {
+            clearTimeout(timeoutId);
+            setError("User not found. Please log in again.");
+            setLoading(false);
+            return;
+          }
+          user = JSON.parse(userData);
+          userId = user.user_id || user.id;
+
+          if (!userId) {
+            clearTimeout(timeoutId);
+            setError("Invalid user data. Please log in again.");
+            setLoading(false);
+            return;
+          }
+        } catch (parseError) {
+          clearTimeout(timeoutId);
+          setError("Invalid user data. Please log in again.");
+          setLoading(false);
+          return;
+        }
+      } else {
         clearTimeout(timeoutId);
-        setError("User not found. Please log in again.");
+        setError("localStorage not available. Please try again.");
         setLoading(false);
         return;
       }
 
-      const user = JSON.parse(userData);
-      const userId = user.user_id || user.id;
-
       console.log("🔍 Fetching bookings for user:", userId);
 
-      // Update this URL to match your actual API base URL
+      // Fix API URL - Update this to your actual API base URL
       const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_URL || "https://your-api-domain.com";
+        process.env.NEXT_PUBLIC_API_URL || "https://klinner.onrender.com"; // Replace with your actual API URL
       const apiUrl = `${API_BASE_URL}/api/v1/user/services/${userId}`;
 
       console.log("📡 Making API call to:", apiUrl);
@@ -59,10 +81,20 @@ export default function BookingsPage() {
         },
       });
 
-      clearTimeout(timeoutId); // Clear timeout on successful response
+      clearTimeout(timeoutId); // Clear timeout on response
+
+      console.log("📡 Response status:", response.status);
+      console.log(
+        "📡 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error("❌ API Error Response:", errorText);
+        throw new Error(
+          `API Error (${response.status}): ${errorText || "Unknown error"}`
+        );
       }
 
       const result = await response.json();
@@ -80,7 +112,7 @@ export default function BookingsPage() {
           time: item.booking.bookingTime,
           address: item.booking.location,
           price: `₦${(item.serviceRate / 100).toLocaleString()}`, // Convert from kobo to naira
-          areas: item.areas,
+          areas: item.areas || [],
           providerName: "Klinner Professional", // Default since not in API
           providerImage: null, // Not provided in API
           serviceImage: null, // Not provided in API
@@ -95,7 +127,21 @@ export default function BookingsPage() {
       }
     } catch (error) {
       console.error("💥 Error fetching bookings:", error);
-      setError(`Failed to load bookings: ${error.message}`);
+
+      // More specific error messages
+      if (error.message.includes("fetch")) {
+        setError(
+          "Network error. Please check your internet connection and try again."
+        );
+      } else if (error.message.includes("500")) {
+        setError(
+          "Server error. Our team has been notified. Please try again later."
+        );
+      } else if (error.message.includes("404")) {
+        setError("API endpoint not found. Please contact support.");
+      } else {
+        setError(`Failed to load bookings: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }

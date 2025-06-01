@@ -32,7 +32,7 @@ export default function UserHeader({ name }: UserHeaderProps) {
             src={profileImage}
             alt="User avatar"
             className="w-full h-full object-cover"
-            onError={() => setProfileImage("/avartar.png")} // Fallback if image fails to load
+            onError={() => setProfileImage("/avarter.png")} // Fallback if image fails to load
           />
         </div>
         <div>

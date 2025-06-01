@@ -431,15 +431,15 @@ const UserProfile = () => {
               <div className="w-24 h-24 relative">
                 <img
                   src={
-                    userInfo?.profileImage?.url ||
-                    "https://randomuser.me/api/portraits/men/72.jpg"
+                    userInfo?.profileImage?.url 
+
                   }
                   alt="Profile"
                   className="w-full h-full rounded-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).onerror = null;
                     (e.target as HTMLImageElement).src =
-                      "https://randomuser.me/api/portraits/men/72.jpg";
+                      "/avarter.png"; // Fallback image
                   }}
                 />
               </div>

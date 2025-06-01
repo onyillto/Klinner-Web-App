@@ -8,7 +8,6 @@ export default function BookingsPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("upcoming");
   const [filterStatus, setFilterStatus] = useState("all");
   const [error, setError] = useState(null);
 
@@ -140,7 +139,7 @@ export default function BookingsPage() {
           id: item._id,
           serviceType: item.serviceCategory,
           serviceName: item.serviceName,
-          status: item.booking.progress, // 'pending', 'confirmed', 'completed', 'cancelled'
+          status: item.booking.progress, // This will be 'pending', 'confirmed', 'completed', 'cancelled'
           paymentStatus: item.booking.paymentStatus,
           date: item.booking.bookingDate,
           time: item.booking.bookingTime,
@@ -152,9 +151,13 @@ export default function BookingsPage() {
           serviceImage: null, // Not provided in API
           createdAt: item.createdAt,
           service_id: item.service_id,
+          rawBookingData: item.booking, // Keep original booking data for debugging
         }));
 
         console.log("🔄 Transformed bookings:", transformedBookings);
+        console.log("📊 Booking statuses found:", [
+          ...new Set(transformedBookings.map((b) => b.status)),
+        ]);
         setBookings(transformedBookings);
       } else {
         setError(result.message || "Failed to fetch bookings");
@@ -181,26 +184,26 @@ export default function BookingsPage() {
     }
   };
 
-  // Filter bookings based on active tab and status filter
+  // Filter bookings based on status filter only (no date filtering)
   const filteredBookings = bookings.filter((booking) => {
-    const bookingDate = new Date(booking.date);
-    const today = new Date();
-
-    // First filter by tab
-    if (activeTab === "upcoming" && bookingDate < today) {
-      return false;
-    }
-    if (activeTab === "past" && bookingDate >= today) {
-      return false;
-    }
-
-    // Then filter by status
+    // Only filter by status
     if (filterStatus !== "all" && booking.status !== filterStatus) {
       return false;
     }
-
     return true;
   });
+
+  // Debug logging to help understand filtering
+  console.log("🔍 Current filter status:", filterStatus);
+  console.log("📊 All bookings count:", bookings.length);
+  console.log("🎯 Filtered bookings count:", filteredBookings.length);
+  console.log("📋 Available statuses:", [
+    ...new Set(bookings.map((b) => b.status)),
+  ]);
+  console.log(
+    "🔎 Sample booking statuses:",
+    bookings.slice(0, 3).map((b) => ({ id: b.id, status: b.status }))
+  );
 
   // Format date for display
   const formatBookingDate = (dateString) => {
@@ -235,6 +238,7 @@ export default function BookingsPage() {
         return "bg-yellow-100 text-yellow-800";
       case "completed":
         return "bg-blue-100 text-blue-800";
+      case "cancel":
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
@@ -326,81 +330,59 @@ export default function BookingsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200 mb-6">
-            <button
-              onClick={() => setActiveTab("upcoming")}
-              className={`py-4 px-6 font-medium text-sm ${
-                activeTab === "upcoming"
-                  ? "border-b-2 border-purple-600 text-purple-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Upcoming Bookings
-            </button>
-            <button
-              onClick={() => setActiveTab("past")}
-              className={`py-4 px-6 font-medium text-sm ${
-                activeTab === "past"
-                  ? "border-b-2 border-purple-600 text-purple-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Past Bookings
-            </button>
-          </div>
-
           {/* Status Filter */}
           <div className="flex flex-wrap gap-2 mb-6">
             <button
               onClick={() => setFilterStatus("all")}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 filterStatus === "all"
-                  ? "bg-purple-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-100"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
               }`}
             >
-              All
-            </button>
-            <button
-              onClick={() => setFilterStatus("confirmed")}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
-                filterStatus === "confirmed"
-                  ? "bg-purple-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              Confirmed
+              All ({bookings.length})
             </button>
             <button
               onClick={() => setFilterStatus("pending")}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 filterStatus === "pending"
-                  ? "bg-purple-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-100"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
               }`}
             >
-              Pending
+              Pending ({bookings.filter((b) => b.status === "pending").length})
+            </button>
+            <button
+              onClick={() => setFilterStatus("confirmed")}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                filterStatus === "confirmed"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              Confirmed (
+              {bookings.filter((b) => b.status === "confirmed").length})
             </button>
             <button
               onClick={() => setFilterStatus("completed")}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 filterStatus === "completed"
-                  ? "bg-purple-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-100"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
               }`}
             >
-              Completed
+              Completed (
+              {bookings.filter((b) => b.status === "completed").length})
             </button>
             <button
-              onClick={() => setFilterStatus("cancelled")}
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
-                filterStatus === "cancelled"
-                  ? "bg-purple-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-100"
+              onClick={() => setFilterStatus("cancel")}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                filterStatus === "cancel"
+                  ? "bg-purple-600 text-white border-purple-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
               }`}
             >
-              Cancelled
+              Cancelled ({bookings.filter((b) => b.status === "cancel").length})
             </button>
           </div>
 
@@ -431,9 +413,7 @@ export default function BookingsPage() {
                 No Bookings Found
               </h3>
               <p className="text-gray-500 mb-6">
-                {activeTab === "upcoming"
-                  ? "You don't have any upcoming bookings matching your filter."
-                  : "You don't have any past bookings matching your filter."}
+                You don't have any bookings matching your current filter.
               </p>
               <button
                 onClick={() => router.push("/house-cleaning")}
@@ -482,8 +462,10 @@ export default function BookingsPage() {
                                 booking.status
                               )}`}
                             >
-                              {booking.status.charAt(0).toUpperCase() +
-                                booking.status.slice(1)}
+                              {booking.status === "cancel"
+                                ? "Cancelled"
+                                : booking.status.charAt(0).toUpperCase() +
+                                  booking.status.slice(1)}
                             </span>
                           </div>
                           <p className="text-gray-500 mt-1">ID: {booking.id}</p>

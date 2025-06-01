@@ -192,7 +192,7 @@ export default function DateTimeSelector({ isOpen, onClose, selectedItems }) {
 
           {/* Calendar */}
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 text-black">
               <button
                 onClick={handlePrevMonth}
                 className="p-2 rounded-full hover:bg-gray-100"

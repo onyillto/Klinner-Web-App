@@ -90,13 +90,25 @@ export default function ServiceCategories() {
 
   const handleCategoryClick = (category) => {
     if (category.active) {
-      localStorage.setItem("selectedService", JSON.stringify(category));
+      // Safe localStorage usage
+      if (typeof window !== "undefined" && window.localStorage) {
+        try {
+          localStorage.setItem("selectedService", JSON.stringify(category));
+        } catch (error) {
+          console.warn("localStorage not available:", error);
+        }
+      }
       router.push(`/booking?service=${category.name.toLowerCase()}`);
     } else {
+      // Show coming soon modal
       setShowComingSoon(category.name);
-      // Hide the message after 3 seconds
+      // Auto-hide after 3 seconds
       setTimeout(() => setShowComingSoon(null), 3000);
     }
+  };
+
+  const closeComingSoonModal = () => {
+    setShowComingSoon(null);
   };
 
   return (
@@ -105,10 +117,10 @@ export default function ServiceCategories() {
         Services
       </h2>
 
-      {/* Coming Soon Modal/Toast */}
+      {/* Coming Soon Modal */}
       {showComingSoon && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 mx-4 max-w-sm w-full shadow-xl">
+          <div className="bg-white rounded-lg p-6 mx-4 max-w-sm w-full shadow-xl animate-pulse">
             <div className="text-center">
               <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🚀</span>
@@ -120,8 +132,8 @@ export default function ServiceCategories() {
                 Coming Soon! We're working hard to bring you this service.
               </p>
               <button
-                onClick={() => setShowComingSoon(null)}
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors"
+                onClick={closeComingSoonModal}
+                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 Got it!
               </button>
@@ -130,7 +142,7 @@ export default function ServiceCategories() {
         </div>
       )}
 
-      {/* Mobile view as scrollable row showing 3 at once */}
+      {/* Mobile view - scrollable row */}
       <div className="lg:hidden overflow-x-auto pb-4 -mx-4 px-4">
         <div className="flex w-full" style={{ minWidth: "min-content" }}>
           {categories.map((category) => (
@@ -142,12 +154,19 @@ export default function ServiceCategories() {
                   : "opacity-70 hover:opacity-90"
               }`}
               onClick={() => handleCategoryClick(category)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleCategoryClick(category);
+                }
+              }}
             >
               <div
                 className={`w-16 h-16 ${
                   category.color
-                } rounded-full flex items-center justify-center text-2xl mb-2 relative ${
-                  !category.active ? "filter grayscale" : ""
+                } rounded-full flex items-center justify-center text-2xl mb-2 relative transition-all ${
+                  !category.active ? "grayscale" : ""
                 }`}
               >
                 <span>{category.icon}</span>
@@ -159,7 +178,7 @@ export default function ServiceCategories() {
               </div>
               <span
                 className={`text-sm text-center whitespace-nowrap ${
-                  category.active ? "text-black" : "text-gray-500"
+                  category.active ? "text-black font-medium" : "text-gray-500"
                 }`}
               >
                 {category.name}
@@ -174,7 +193,7 @@ export default function ServiceCategories() {
         </div>
       </div>
 
-      {/* Desktop view as a grid */}
+      {/* Desktop view - grid layout */}
       <div className="hidden lg:grid lg:grid-cols-5 lg:gap-6">
         {categories.map((category) => (
           <div
@@ -185,12 +204,19 @@ export default function ServiceCategories() {
                 : "opacity-70 hover:opacity-90"
             }`}
             onClick={() => handleCategoryClick(category)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                handleCategoryClick(category);
+              }
+            }}
           >
             <div
               className={`w-20 h-20 ${
                 category.color
-              } rounded-full flex items-center justify-center text-3xl mb-2 relative ${
-                !category.active ? "filter grayscale" : ""
+              } rounded-full flex items-center justify-center text-3xl mb-2 relative transition-all ${
+                !category.active ? "grayscale" : ""
               }`}
             >
               <span>{category.icon}</span>
@@ -202,7 +228,7 @@ export default function ServiceCategories() {
             </div>
             <span
               className={`text-base ${
-                category.active ? "text-black" : "text-gray-500"
+                category.active ? "text-black font-medium" : "text-gray-500"
               }`}
             >
               {category.name}
@@ -216,7 +242,6 @@ export default function ServiceCategories() {
         ))}
       </div>
 
-      {/* Alternative: Simple badge overlay for coming soon */}
       <style jsx>{`
         .grayscale {
           filter: grayscale(100%);

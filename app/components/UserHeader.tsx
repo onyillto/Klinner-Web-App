@@ -11,7 +11,82 @@ interface UserHeaderProps {
 export default function UserHeader({ name }: UserHeaderProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [profileImage, setProfileImage] = useState("/avartar.png"); // Default image
+  const [greeting, setGreeting] = useState("Good Morning 👋");
+  const [currentTime, setCurrentTime] = useState<string>("");
   const { user } = useAuth(); // Get user from auth context
+
+  // Function to get African time-based greeting
+  const getAfricanTimeGreeting = () => {
+    // Get current time in different African time zones
+    const now = new Date();
+
+    // Major African time zones
+    const timeZones = {
+      // West Africa Time (WAT) - UTC+1
+      lagos: new Date(
+        now.toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+      ),
+      // Central Africa Time (CAT) - UTC+2
+      johannesburg: new Date(
+        now.toLocaleString("en-US", { timeZone: "Africa/Johannesburg" })
+      ),
+      // East Africa Time (EAT) - UTC+3
+      nairobi: new Date(
+        now.toLocaleString("en-US", { timeZone: "Africa/Nairobi" })
+      ),
+    };
+
+    // Use Lagos time as primary (you can change this based on your location)
+    const africanTime = timeZones.lagos;
+    const hour = africanTime.getHours();
+
+    // Format time for display
+    const timeString = africanTime.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    // Determine greeting based on hour
+    let greetingText = "";
+    let emoji = "";
+
+    if (hour >= 5 && hour < 12) {
+      greetingText = "Good Morning";
+      emoji = "🌅";
+    } else if (hour >= 12 && hour < 17) {
+      greetingText = "Good Afternoon";
+      emoji = "☀️";
+    } else if (hour >= 17 && hour < 21) {
+      greetingText = "Good Evening";
+      emoji = "🌆";
+    } else {
+      greetingText = "Good Night";
+      emoji = "🌙";
+    }
+
+    return {
+      greeting: `${greetingText} ${emoji}`,
+      time: timeString,
+      timezone: "WAT", // West Africa Time
+    };
+  };
+
+  useEffect(() => {
+    // Update greeting immediately
+    const updateGreeting = () => {
+      const timeInfo = getAfricanTimeGreeting();
+      setGreeting(timeInfo.greeting);
+      setCurrentTime(`${timeInfo.time} ${timeInfo.timezone}`);
+    };
+
+    updateGreeting();
+
+    // Update every minute
+    const interval = setInterval(updateGreeting, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     // Update profile image if user data is available
@@ -36,7 +111,16 @@ export default function UserHeader({ name }: UserHeaderProps) {
           />
         </div>
         <div>
-          <p className="text-gray-600 text-sm lg:text-base">Good Morning 👋</p>
+          {/* Mobile: Stack vertically, Large screens: Inline */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-2">
+            <p className="text-gray-600 text-sm lg:text-base">{greeting}</p>
+            {currentTime && (
+              <p className="text-gray-500 text-xs lg:text-sm">
+                <span className="hidden lg:inline">• </span>
+                {currentTime}
+              </p>
+            )}
+          </div>
           <h2 className="font-bold text-black text-xl lg:text-2xl">{name}</h2>
         </div>
       </div>

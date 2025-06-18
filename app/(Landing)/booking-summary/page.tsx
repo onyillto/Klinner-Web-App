@@ -4,12 +4,100 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Head from "next/head";
-import Cookies from "js-cookie"; // Make sure to install this package: npm install js-cookie
+import Cookies from "js-cookie";
+
+// Pricing configuration based on room types and sizes
+const PRICING_CONFIG = {
+  // Base service fee
+  baseServiceFee: 10000, // ₦10,000 minimum service charge
+
+  // Room-specific pricing with size variations
+  roomPricing: {
+    "Living Room": {
+      small: 8000, // Up to 15 sqm
+      medium: 12000, // 15-30 sqm
+      large: 18000, // 30+ sqm
+      description: "Sofa cleaning, floor mopping, dusting furniture",
+    },
+    Bedroom: {
+      small: 6000, // Single/twin room
+      medium: 9000, // Double/queen room
+      large: 13000, // Master bedroom with walk-in closet
+      description: "Bed making, floor cleaning, wardrobe organization",
+    },
+    Kitchen: {
+      small: 10000, // Kitchenette/galley
+      medium: 15000, // Standard kitchen
+      large: 22000, // Large kitchen with island
+      description: "Appliance cleaning, countertop sanitization, floor mopping",
+    },
+    Bathroom: {
+      small: 8000, // Half bath/powder room
+      medium: 12000, // Full bathroom
+      large: 16000, // Master bathroom with tub
+      description: "Deep sanitization, tile scrubbing, mirror cleaning",
+    },
+    "Dining Room": {
+      small: 5000, // Small dining area
+      medium: 8000, // Standard dining room
+      large: 12000, // Large formal dining room
+      description: "Table cleaning, floor mopping, chandelier dusting",
+    },
+    "Office/Study": {
+      small: 4000, // Small home office
+      medium: 7000, // Standard office
+      large: 10000, // Large office with multiple desks
+      description: "Desk organization, electronics dusting, floor cleaning",
+    },
+    "Balcony/Terrace": {
+      small: 3000, // Small balcony
+      medium: 5000, // Medium terrace
+      large: 8000, // Large outdoor space
+      description: "Sweeping, furniture cleaning, plant area tidying",
+    },
+    "Laundry Room": {
+      small: 4000, // Basic laundry area
+      medium: 6000, // Standard laundry room
+      large: 8000, // Large laundry room with storage
+      description: "Machine cleaning, floor mopping, organizing supplies",
+    },
+    Garage: {
+      small: 5000, // Single car garage
+      medium: 8000, // Double car garage
+      large: 12000, // Large garage with storage
+      description: "Floor sweeping, basic organization, cobweb removal",
+    },
+    Staircase: {
+      small: 3000, // Single flight
+      medium: 5000, // Two flights
+      large: 7000, // Multiple flights or curved stairs
+      description: "Step cleaning, railing polishing, carpet/floor care",
+    },
+  },
+
+  // Service type multipliers
+  serviceMultipliers: {
+    "Standard Home Cleaning": 1.0,
+    "Deep Cleaning": 1.5,
+    "Post-Construction Cleaning": 2.0,
+    "Move-in/Move-out Cleaning": 1.8,
+    "Office Cleaning": 1.2,
+  },
+
+  // Frequency discounts
+  frequencyDiscounts: {
+    "One-time": 0,
+    Weekly: 0.15, // 15% discount
+    "Bi-weekly": 0.1, // 10% discount
+    Monthly: 0.05, // 5% discount
+  },
+};
 
 export default function BookingSummary() {
   const router = useRouter();
   const [bookingData, setBookingData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedSizes, setSelectedSizes] = useState({});
 
   useEffect(() => {
     // Load booking data from localStorage
@@ -17,9 +105,18 @@ export default function BookingSummary() {
       try {
         const storedBookingData = localStorage.getItem("bookingData");
         if (storedBookingData) {
-          setBookingData(JSON.parse(storedBookingData));
+          const parsed = JSON.parse(storedBookingData);
+          setBookingData(parsed);
+
+          // Initialize default sizes for each area
+          const defaultSizes = {};
+          if (parsed.areas) {
+            parsed.areas.forEach((area) => {
+              defaultSizes[area] = "medium"; // Default to medium size
+            });
+          }
+          setSelectedSizes(defaultSizes);
         } else {
-          // If no booking data, redirect back to cleaning page
           router.push("/house-cleaning");
         }
       } catch (error) {
@@ -31,6 +128,130 @@ export default function BookingSummary() {
 
     loadBookingData();
   }, [router]);
+
+  // Handle size selection for each room
+  const handleSizeChange = (room, size) => {
+    setSelectedSizes((prev) => ({
+      ...prev,
+      [room]: size,
+    }));
+  };
+
+  // Calculate price for individual room
+  const calculateRoomPrice = (roomType, size) => {
+    const roomConfig = PRICING_CONFIG.roomPricing[roomType];
+    if (!roomConfig) return 5000; // Default price for unlisted rooms
+    return roomConfig[size] || roomConfig.medium;
+  };
+
+  // Calculate total estimated time
+  const calculateEstimatedTime = () => {
+    if (!bookingData?.areas) return "N/A";
+
+    let totalMinutes = 60; // Base time for setup and travel
+
+    bookingData.areas.forEach((area) => {
+      const size = selectedSizes[area] || "medium";
+      // Time estimation based on room type and size
+      switch (size) {
+        case "small":
+          totalMinutes += 30;
+          break;
+        case "medium":
+          totalMinutes += 45;
+          break;
+        case "large":
+          totalMinutes += 75;
+          break;
+        default:
+          totalMinutes += 45;
+      }
+    });
+
+    // Apply service type multiplier
+    const serviceType = bookingData.serviceCategory || "Standard Home Cleaning";
+    const multiplier = PRICING_CONFIG.serviceMultipliers[serviceType] || 1.0;
+    totalMinutes = Math.round(totalMinutes * multiplier);
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    return `${hours}h ${minutes > 0 ? `${minutes}m` : ""}`;
+  };
+
+  // Calculate detailed pricing breakdown
+  const calculatePricing = () => {
+    if (!bookingData?.areas)
+      return { breakdown: [], subtotal: 0, total: 0, savings: 0 };
+
+    let subtotal = PRICING_CONFIG.baseServiceFee;
+    const breakdown = [];
+
+    // Add base service fee
+    breakdown.push({
+      item: "Base Service Fee",
+      description: "Minimum service charge, equipment, and travel",
+      quantity: 1,
+      price: PRICING_CONFIG.baseServiceFee,
+      total: PRICING_CONFIG.baseServiceFee,
+    });
+
+    // Calculate room-specific pricing
+    const roomCounts = {};
+    bookingData.areas.forEach((area) => {
+      roomCounts[area] = (roomCounts[area] || 0) + 1;
+    });
+
+    Object.entries(roomCounts).forEach(([roomType, count]) => {
+      const size = selectedSizes[roomType] || "medium";
+      const roomPrice = calculateRoomPrice(roomType, size);
+      const roomTotal = Number(roomPrice) * Number(count);
+      subtotal += roomTotal;
+
+      breakdown.push({
+        item: `${roomType} (${size})`,
+        description:
+          PRICING_CONFIG.roomPricing[roomType]?.description ||
+          "Standard cleaning",
+        quantity: count,
+        price: roomPrice,
+        total: roomTotal,
+      });
+    });
+
+    // Apply service type multiplier
+    const serviceType = bookingData.serviceCategory || "Standard Home Cleaning";
+    const serviceMultiplier =
+      PRICING_CONFIG.serviceMultipliers[serviceType] || 1.0;
+
+    if (serviceMultiplier !== 1.0) {
+      const multiplierAmount = subtotal * (serviceMultiplier - 1);
+      subtotal += multiplierAmount;
+
+      breakdown.push({
+        item: `${serviceType} Premium`,
+        description: `Additional charge for specialized ${serviceType.toLowerCase()}`,
+        quantity: 1,
+        price: multiplierAmount,
+        total: multiplierAmount,
+      });
+    }
+
+    // Apply frequency discount (if any)
+    const frequency = bookingData.frequency || "One-time";
+    const discount = PRICING_CONFIG.frequencyDiscounts[frequency] || 0;
+    const savings = subtotal * discount;
+    const total = subtotal - savings;
+
+    return {
+      breakdown,
+      subtotal: Math.round(subtotal),
+      savings: Math.round(savings),
+      total: Math.round(total),
+      serviceMultiplier,
+      discount,
+    };
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -45,28 +266,19 @@ export default function BookingSummary() {
 
   const formatTime = (timeString) => {
     if (!timeString) return "";
-
     const [hours, minutes] = timeString.split(":");
     const hour = parseInt(hours, 10);
-
-    if (hour === 0) {
-      return "12:00 AM";
-    } else if (hour < 12) {
-      return `${hour}:${minutes} AM`;
-    } else if (hour === 12) {
-      return `12:${minutes} PM`;
-    } else {
-      return `${hour - 12}:${minutes} PM`;
-    }
+    if (hour === 0) return "12:00 AM";
+    if (hour < 12) return `${hour}:${minutes} AM`;
+    if (hour === 12) return `12:${minutes} PM`;
+    return `${hour - 12}:${minutes} PM`;
   };
 
   const handleConfirmBooking = async () => {
     setLoading(true);
 
     try {
-      // Retrieve the auth token from cookies
       const authToken = Cookies.get("auth_token");
-
       if (!authToken) {
         alert("Authentication required. Please log in again.");
         setLoading(false);
@@ -82,26 +294,38 @@ export default function BookingSummary() {
         return;
       }
 
-      // Calculate service rate
-      const basePrice = 5000;
-      const pricePerItem = 2000;
-      const totalItems = bookingData.areas?.length || 0;
-      const serviceRate = ((basePrice + totalItems * pricePerItem) / 100).toFixed(2);
+      const pricing = calculatePricing();
+
+      // ✅ FIXED: Send the total amount directly (no division by 100)
+      const serviceRate = pricing.total;
+
+      // 🔍 DEBUG LOGS (you can remove these later)
+      console.log("🟢 FRONTEND DEBUG - AFTER FIX:");
+      console.log("💰 pricing.total:", pricing.total);
+      console.log("💰 serviceRate:", serviceRate);
+      console.log(
+        "💰 Expected Paystack amount: ₦" + serviceRate.toLocaleString()
+      );
 
       const serviceData = {
         user_id: userId,
         serviceName: bookingData.serviceName || "Cleaning",
-        serviceCategory: bookingData.serviceCategory || "Standard Home Cleaning",
+        serviceCategory:
+          bookingData.serviceCategory || "Standard Home Cleaning",
         areas: bookingData.areas || [],
+        roomSizes: selectedSizes,
         bookingDate: bookingData.bookingDate,
         bookingTime: bookingData.bookingTime,
         location: bookingData.location,
-        serviceRate,
+        serviceRate, // ✅ Now this will be 19000 instead of "190.00"
+        estimatedDuration: calculateEstimatedTime(),
+        pricingBreakdown: pricing.breakdown,
       };
 
-      // Make the API call to your backend
+      console.log("📤 What we're sending to backend:", serviceData.serviceRate);
+
       const response = await fetch(
-        "https://klinner.onrender.com/api/v1/service/create-service",
+        "http://localhost:3002/api/v1/service/create-service",
         {
           method: "POST",
           headers: {
@@ -123,18 +347,18 @@ export default function BookingSummary() {
       const { authorization_url, access_code, reference } = data.data.payment;
       const serviceId = data.data.cleaningService._id;
 
-      // Store booking data in localStorage so the confirmation page can access it
       const confirmedBooking = {
         ...bookingData,
         id: serviceId,
         confirmed: true,
         paymentStatus: "pending",
         paymentReference: reference,
+        finalPrice: pricing.total,
+        roomSizes: selectedSizes,
+        estimatedDuration: calculateEstimatedTime(),
       };
-      
-      localStorage.setItem("bookingData", JSON.stringify(confirmedBooking));
 
-      // Redirect to payment page
+      localStorage.setItem("bookingData", JSON.stringify(confirmedBooking));
       window.location.href = authorization_url;
     } catch (error) {
       console.error("Error during booking confirmation:", error);
@@ -143,8 +367,9 @@ export default function BookingSummary() {
     }
   };
 
+  // ✅ FIXED: Edit button uses router.back() instead of router.push()
   const handleEditBooking = () => {
-    router.push("/house-cleaning");
+    router.back();
   };
 
   if (loading) {
@@ -192,30 +417,7 @@ export default function BookingSummary() {
     );
   }
 
-  // Calculate estimated time
-  const calculateEstimatedTime = () => {
-    if (!bookingData.areas) return "N/A";
-
-    const totalItems = bookingData.areas.length;
-    const baseTime = 60; // 60 minutes base time
-    const timePerItem = 30; // 30 minutes per item
-    const totalMinutes = baseTime + totalItems * timePerItem;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours}h ${minutes > 0 ? `${minutes}m` : ""}`;
-  };
-
-  // Calculate estimated price
-  const calculatePrice = () => {
-    if (!bookingData.areas) return 0;
-
-    const basePrice = 500000; // Base price in cents (₦50)
-    const pricePerItem = 200000; // Price per area in cents (₦20)
-    const totalItems = bookingData.areas.length;
-
-    return ((basePrice + totalItems * pricePerItem) / 100).toFixed(2);
-  };
+  const pricing = calculatePricing();
 
   return (
     <>
@@ -303,39 +505,73 @@ export default function BookingSummary() {
               </div>
 
               <div className="border-b pb-4">
-                <div className="flex justify-between mb-2">
+                <div className="flex justify-between mb-4">
                   <span className="text-gray-600">Areas to Clean</span>
                   <span className="font-medium text-gray-900">
                     {bookingData.areas?.length || 0} areas
                   </span>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {bookingData.areas?.map((area, index) => (
-                      <li key={index} className="flex items-center">
-                        <svg
-                          className="h-5 w-5 text-purple-500 mr-2"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span className="text-gray-800">{area}</span>
-                      </li>
-                    ))}
-                  </ul>
+
+                {/* Room size selection */}
+                <div className="space-y-4">
+                  {bookingData.areas?.map((area, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center">
+                          <svg
+                            className="h-5 w-5 text-purple-500 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          <span className="font-medium text-gray-800">
+                            {area}
+                          </span>
+                        </div>
+                        <span className="text-sm font-semibold text-purple-600">
+                          ₦
+                          {calculateRoomPrice(
+                            area,
+                            selectedSizes[area] || "medium"
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="flex gap-2">
+                        {["small", "medium", "large"].map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => handleSizeChange(area, size)}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                              selectedSizes[area] === size
+                                ? "bg-purple-600 text-white"
+                                : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"
+                            }`}
+                          >
+                            {size.charAt(0).toUpperCase() + size.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+
+                      <p className="text-xs text-gray-500 mt-2">
+                        {PRICING_CONFIG.roomPricing[area]?.description ||
+                          "Standard cleaning included"}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div className="border-b pb-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Estimated Time</span>
+                  <span className="text-gray-600">Estimated Duration</span>
                   <span className="font-medium text-purple-600">
                     {calculateEstimatedTime()}
                   </span>
@@ -403,7 +639,7 @@ export default function BookingSummary() {
             </div>
           </div>
 
-          {/* Pricing Details */}
+          {/* Detailed Pricing Breakdown */}
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
             <div className="flex items-center mb-6">
               <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3">
@@ -424,38 +660,57 @@ export default function BookingSummary() {
               </div>
               <div>
                 <h2 className="text-lg font-medium text-gray-900">
-                  Pricing Details
+                  Pricing Breakdown
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Breakdown of your service cost
+                  Detailed cost calculation
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="border-b pb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Base Fee</span>
-                  <span className="font-medium text-gray-900">₦5000.00</span>
-                </div>
-              </div>
-
-              <div className="border-b pb-6">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">
-                    Areas Fee ({bookingData.areas?.length || 0} × ₦2000.00)
+            <div className="space-y-3">
+              {pricing.breakdown.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-start py-2 border-b border-gray-100 last:border-b-0"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-900">
+                        {item.item}
+                      </span>
+                      {item.quantity > 1 && (
+                        <span className="text-sm text-gray-500 ml-2">
+                          ×{item.quantity}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {item.description}
+                    </p>
+                  </div>
+                  <span className="font-medium text-gray-900 ml-4">
+                    ₦{item.total.toLocaleString()}
                   </span>
-                  <span className="font-medium text-gray-900">
-                    ₦{(((bookingData.areas?.length || 0) * 2000)).toFixed(2)}
+                </div>
+              ))}
+
+              {pricing.savings > 0 && (
+                <div className="flex justify-between items-center py-2 text-green-600">
+                  <span className="font-medium">
+                    Frequency Discount ({Math.round(pricing.discount * 100)}%)
+                  </span>
+                  <span className="font-medium">
+                    -₦{pricing.savings.toLocaleString()}
                   </span>
                 </div>
-              </div>
+              )}
 
-              <div className="p-6">
-                <div className="flex justify-between">
-                  <span className="text-gray-800 font-semibold">Total</span>
-                  <span className="font-bold text-purple-600 text-xl">
-                    ₦{calculatePrice()}
+              <div className="pt-4 border-t-2 border-gray-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-bold text-gray-900">Total</span>
+                  <span className="text-2xl font-bold text-purple-600">
+                    ₦{pricing.total.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -476,12 +731,11 @@ export default function BookingSummary() {
               onClick={handleConfirmBooking}
               className="py-3 px-6 bg-purple-600 text-white rounded-xl text-lg font-medium shadow-lg hover:bg-purple-700 transition-colors md:flex-1"
             >
-              Confirm & Pay
+              Confirm & Pay ₦{pricing.total.toLocaleString()}
             </button>
           </div>
         </div>
       </div>
     </>
   );
-
 }

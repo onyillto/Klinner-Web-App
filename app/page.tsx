@@ -53,9 +53,9 @@ export default function Home() {
           <div className="lg:grid lg:grid-cols-12 lg:gap-6">
             <div className="lg:col-span-9">
               {/* Desktop Progress Bar - Only visible on lg+ screens */}
-              <div className="px-4 my-4 hidden lg:block">
+              {/* <div className="px-4 my-4 hidden lg:block">
                 <ProgressBar />
-              </div>
+              </div> */}
 
               {/* Search Bar */}
               <div className="px-4 my-4">
@@ -76,18 +76,18 @@ export default function Home() {
               <div className="px-4 mb-6 lg:grid lg:grid-cols-2 lg:gap-6 text-indigo-600">
                 <ServiceItem
                   title="Standard Cleaning"
-                  price="$5/hr"
+                  price="N15,000/hr"
                   rating={4.5}
-                  reviewCount={8000}
+                  reviewCount={20}
                   imageUrl="/standard.svg"
                 />
 
                 <div className="lg:block">
                   <ServiceItem
                     title="Deep Cleaning"
-                    price="$8/hr"
+                    price="N30,000/hr"
                     rating={4.7}
-                    reviewCount={5200}
+                    reviewCount={15}
                     imageUrl="/deep.jpg"
                   />
                 </div>

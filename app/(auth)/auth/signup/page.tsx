@@ -134,10 +134,10 @@ export default function SignUpPage() {
             />
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-[#1E1E1E]">
+          {/* <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-[#1E1E1E]">
             Create Your Account
-          </h1>
-          <p className="text-sm sm:text-base text-center mb-4 text-[#373737B2]">
+          </h1> */}
+          {/* <p className="text-sm sm:text-base text-center mb-4 text-[#373737B2]">
             Sign up with Facebook or Google to get started
           </p>
 
@@ -161,14 +161,14 @@ export default function SignUpPage() {
               <FaGoogle className="mr-2" style={{ color: "#DB4437" }} />
               <span className="text-[#1E1E1EB2]">Sign up with Google</span>
             </button>
-          </div>
-
+          </div> */}
+{/*  */}
           <div className="flex items-center justify-center space-x-2 sm:space-x-4 my-4">
-            <div className="w-16 sm:w-[108px] border-t border-black"></div>
+            {/* <div className="w-16 sm:w-[108px] border-t border-black"></div>
             <p className="text-sm sm:text-base text-center text-[#373737]">
               Or create account with email
             </p>
-            <div className="w-16 sm:w-[108px] border-t border-black"></div>
+            <div className="w-16 sm:w-[108px] border-t border-black"></div> */}
           </div>
 
           <form onSubmit={handleSignUp}>
@@ -271,7 +271,7 @@ export default function SignUpPage() {
 
           <p className="text-sm sm:text-base text-center mt-4 sm:mt-6 mb-3 sm:mb-4 font-semibold text-[#1E1E1E]">
             Already have an account?{" "}
-            <Link href="/auth/sigin" className="text-blue-500">
+            <Link href="/auth/signin" className="text-blue-500">
               Login here
             </Link>
           </p>

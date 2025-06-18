@@ -183,36 +183,36 @@ export default function LoginPage() {
           <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-[#1E1E1E]">
             Welcome to Klinners.co
           </h1>
-          <p className="text-sm sm:text-base text-center mb-4 text-[#373737B2]">
+          {/* <p className="text-sm sm:text-base text-center mb-4 text-[#373737B2]">
             Continue with Facebook or enter your account
-          </p>
+          </p> */}
 
           <div className="space-y-2">
-            <button
+            {/* <button
               className="w-[90%] max-w-[440px] sm:w-[80%] md:w-[440px] h-12 sm:h-[52px] bg-white py-1 sm:py-2 rounded flex items-center justify-center mx-auto"
               style={{ border: "1px solid black" }}
               disabled={isLoading}
             >
               <FaFacebook className="mr-2" style={{ color: "#1877F2" }} />
               <span className="text-[#1E1E1EB2]">Login with Facebook</span>
-            </button>
+            </button> */}
 
-            <button
+            {/* <button
               className="w-[90%] max-w-[440px] sm:w-[80%] md:w-[440px] h-12 sm:h-[52px] bg-white py-1 sm:py-2 rounded flex items-center justify-center mx-auto"
               style={{ border: "1px solid black" }}
               disabled={isLoading}
             >
               <FaGoogle className="mr-2" style={{ color: "#DB4437" }} />
               <span className="text-[#1E1E1EB2]">Login with Google</span>
-            </button>
+            </button> */}
           </div>
 
           <div className="flex items-center justify-center space-x-2 sm:space-x-4 my-4">
-            <div className="w-16 sm:w-[108px] border-t border-black"></div>
+            {/* <div className="w-16 sm:w-[108px] border-t border-black"></div>
             <p className="text-sm sm:text-base text-center text-[#373737]">
               Or login with your account
             </p>
-            <div className="w-16 sm:w-[108px] border-t border-black"></div>
+            <div className="w-16 sm:w-[108px] border-t border-black"></div> */}
           </div>
 
           <form onSubmit={handleLogin}>
@@ -258,7 +258,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center mb-3 sm:mb-4 w-[90%] max-w-[440px] sm:w-full mx-auto">
+            <div className="flex justify-between items-center mb-6 sm:mb-4 w-[90%] max-w-[440px] sm:w-full mx-auto ">
               <label className="flex items-center text-sm sm:text-base text-[#000000]">
                 <input
                   type="checkbox"

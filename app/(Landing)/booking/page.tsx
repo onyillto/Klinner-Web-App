@@ -167,9 +167,9 @@ export default function BookingPage() {
                   {serviceData.name}
                 </span>
               </div>
-              <div className="mt-2 text-2xl font-semibold text-indigo-600">
+              {/* <div className="mt-2 text-2xl font-semibold text-indigo-600">
                 {serviceData.price}
-              </div>
+              </div> */}
               <p className="mt-4 text-gray-600">{serviceData.description}</p>
             </div>
           </div>

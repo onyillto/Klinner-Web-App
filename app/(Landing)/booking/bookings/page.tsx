@@ -1,8 +1,11 @@
+// Updated BookingsPage.js - Key changes for modal integration
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BottomNavigation from "../../../components/BottomNavigation";
+import BookingDetailsModal from "../../../components/BookingDetailsModal"; // Import the modal
 
 export default function BookingsPage() {
   const router = useRouter();
@@ -11,11 +14,17 @@ export default function BookingsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [error, setError] = useState(null);
 
+  // Modal state
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ... (keep all your existing useEffect and fetchUserBookings code unchanged)
   useEffect(() => {
     fetchUserBookings();
   }, []);
 
   const fetchUserBookings = async () => {
+    // ... (keep your existing fetchUserBookings function unchanged)
     try {
       setLoading(true);
       setError(null);
@@ -66,7 +75,7 @@ export default function BookingsPage() {
 
       // Fix API URL - Update this to your actual API base URL
       const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_URL || "https://api.klinner.com"; // Replace with your actual API URL
+        process.env.NEXT_PUBLIC_API_URL || "https://api.klinner.com";
       const apiUrl = `${API_BASE_URL}/api/v1/user/services/${userId}`;
 
       console.log("📡 Making API call to:", apiUrl);
@@ -158,7 +167,9 @@ export default function BookingsPage() {
 
         // Sort bookings by creation date (newest first)
         const sortedBookings = transformedBookings.sort((a, b) => {
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         });
 
         console.log("📅 Bookings sorted by newest first");
@@ -187,6 +198,8 @@ export default function BookingsPage() {
       setLoading(false);
     }
   };
+
+  // ... (keep all your existing filter and format functions unchanged)
 
   // Filter bookings based on status filter only
   const filteredBookings = bookings.filter((booking) => {
@@ -239,9 +252,19 @@ export default function BookingsPage() {
     }
   };
 
-  // Navigate to booking details
+  // Updated viewBookingDetails function to open modal instead of navigating
   const viewBookingDetails = (bookingId) => {
-    router.push(`/bookings/${bookingId}`);
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (booking) {
+      setSelectedBooking(booking);
+      setIsModalOpen(true);
+    }
+  };
+
+  // Close modal function
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedBooking(null);
   };
 
   // Handle booking actions
@@ -254,6 +277,8 @@ export default function BookingsPage() {
   const handleRescheduleBooking = (bookingId) => {
     router.push(`/bookings/${bookingId}/reschedule`);
   };
+
+  // ... (keep your existing error and loading state JSX unchanged)
 
   if (error) {
     return (
@@ -307,20 +332,12 @@ export default function BookingsPage() {
                   My Bookings
                 </h1>
               </div>
-              <div className="flex items-center">
-                <button
-                  onClick={() => router.push("/house-cleaning")}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-purple-700"
-                >
-                  Book New Service
-                </button>
-              </div>
             </div>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-          {/* Status Filter - NO CONFIRMED FILTER */}
+          {/* Status Filter */}
           <div className="flex flex-wrap gap-2 mb-6">
             <button
               onClick={() => setFilterStatus("all")}
@@ -546,20 +563,20 @@ export default function BookingsPage() {
 
                         {booking.status === "pending" && (
                           <>
-                            <button
+                            {/* <button
                               onClick={() =>
                                 handleRescheduleBooking(booking.id)
                               }
                               className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
                               Reschedule
-                            </button>
-                            <button
+                            </button> */}
+                            {/* <button
                               onClick={() => handleCancelBooking(booking.id)}
                               className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
                             >
                               Cancel Booking
-                            </button>
+                            </button> */}
                           </>
                         )}
 
@@ -577,6 +594,13 @@ export default function BookingsPage() {
           )}
         </div>
       </div>
+
+      {/* Booking Details Modal */}
+      <BookingDetailsModal
+        booking={selectedBooking}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
 
       <BottomNavigation />
     </div>

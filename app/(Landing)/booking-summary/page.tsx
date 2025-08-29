@@ -1,26 +1,15 @@
-// pages/booking-summary.js
+// pages/house-cleaning-booking-summary.js - House cleaning specific booking summary
 "use client";
 
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
-export default function BookingSummaryPage() {
+export default function HouseCleaningBookingSummaryPage() {
   const router = useRouter();
-  type ServiceData = {
-    estimatedPrice?: number;
-    [key: string]: any;
-  };
 
-  type Services = {
-    cleaning?: ServiceData;
-    gardening?: ServiceData;
-    laundry?: ServiceData;
-    moving?: ServiceData;
-    [key: string]: ServiceData | undefined;
-  };
-
-  const [services, setServices] = useState<Services>({});
+  const [cleaningData, setCleaningData] = useState(null);
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
@@ -32,6 +21,7 @@ export default function BookingSummaryPage() {
   const [selectedTime, setSelectedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [error, setError] = useState("");
 
   // Available time slots
   const timeSlots = [
@@ -53,273 +43,218 @@ export default function BookingSummaryPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Load all service data from localStorage
+  // Load house cleaning data from localStorage
   useEffect(() => {
-    const loadedServices: Services = {};
+    console.log("Loading house cleaning data from localStorage...");
 
-    // Load house cleaning data
-    const cleaningData = localStorage.getItem("cleaningItems");
-    if (cleaningData) {
+    const cleaningItems = localStorage.getItem("cleaningItems");
+    if (cleaningItems) {
       try {
-        const parsed = JSON.parse(cleaningData);
-        loadedServices.cleaning = parsed;
+        const parsed = JSON.parse(cleaningItems);
+        setCleaningData(parsed);
+        console.log("Loaded cleaning data:", parsed);
+
+        // Pre-fill preferred time if it exists in the cleaning data
+        if (parsed.preferredTime) {
+          setSelectedTime(parsed.preferredTime);
+        }
       } catch (e) {
         console.error("Error parsing cleaning data:", e);
+        setError(
+          "Failed to load your cleaning service selection. Please go back and select your service again."
+        );
       }
+    } else {
+      setError("No cleaning service selected. Please select a service first.");
     }
-
-    // Load gardening data
-    const gardeningData = localStorage.getItem("gardeningServices");
-    if (gardeningData) {
-      try {
-        const parsed = JSON.parse(gardeningData);
-        loadedServices.gardening = parsed;
-      } catch (e) {
-        console.error("Error parsing gardening data:", e);
-      }
-    }
-
-    // Load laundry data
-    const laundryData = localStorage.getItem("laundryOption");
-    if (laundryData) {
-      try {
-        const parsed = JSON.parse(laundryData);
-        loadedServices.laundry = parsed;
-      } catch (e) {
-        console.error("Error parsing laundry data:", e);
-      }
-    }
-
-    // Load moving data
-    const movingData = localStorage.getItem("moveOutRooms");
-    if (movingData) {
-      try {
-        const parsed = JSON.parse(movingData);
-        loadedServices.moving = parsed;
-      } catch (e) {
-        console.error("Error parsing moving data:", e);
-      }
-    }
-
-    setServices(loadedServices);
   }, []);
 
-  // Calculate total price
-  const calculateTotalPrice = () => {
-    let total = 0;
-
-    if (services.cleaning?.estimatedPrice) {
-      total += parseInt(String(services.cleaning.estimatedPrice)) || 0;
+  // Get user ID from auth token or cookies
+  const getUserId = () => {
+    // Try to get user ID from cookies or decode from auth token
+    const userId = Cookies.get("user_id");
+    if (userId) {
+      return userId;
     }
 
-    if (services.gardening?.estimatedPrice) {
-      total += parseInt(String(services.gardening.estimatedPrice)) || 0;
+    // If no user_id cookie, you might need to decode from auth token
+    // This depends on your auth implementation
+    const authToken = Cookies.get("auth_token");
+    if (authToken) {
+      try {
+        // Decode JWT token to get user ID (basic example)
+        const payload = JSON.parse(atob(authToken.split(".")[1]));
+        return payload.userId || payload.id || payload.sub;
+      } catch (e) {
+        console.error("Failed to decode auth token:", e);
+      }
     }
 
-    if (services.laundry?.estimatedPrice) {
-      total += parseInt(String(services.laundry.estimatedPrice)) || 0;
-    }
-
-    if (services.moving?.estimatedPrice) {
-      total += parseInt(String(services.moving.estimatedPrice)) || 0;
-    }
-
-    return total;
+    return null;
   };
 
-  // Get service icon
-  const getServiceIcon = (serviceType) => {
-    switch (serviceType) {
-      case "cleaning":
-        return (
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-            />
-          </svg>
-        );
-      case "gardening":
-        return (
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-            />
-          </svg>
-        );
-      case "laundry":
-        return (
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-            />
-          </svg>
-        );
-      case "moving":
-        return (
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-            />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
-
-  // Get service color theme
-  const getServiceTheme = (serviceType) => {
-    switch (serviceType) {
-      case "cleaning":
-        return {
-          bg: "bg-purple-50",
-          border: "border-purple-200",
-          text: "text-purple-700",
-          icon: "text-purple-600",
-        };
-      case "gardening":
-        return {
-          bg: "bg-green-50",
-          border: "border-green-200",
-          text: "text-green-700",
-          icon: "text-green-600",
-        };
-      case "laundry":
-        return {
-          bg: "bg-purple-50",
-          border: "border-purple-200",
-          text: "text-purple-700",
-          icon: "text-purple-600",
-        };
-      case "moving":
-        return {
-          bg: "bg-blue-50",
-          border: "border-blue-200",
-          text: "text-blue-700",
-          icon: "text-blue-600",
-        };
-      default:
-        return {
-          bg: "bg-gray-50",
-          border: "border-gray-200",
-          text: "text-gray-700",
-          icon: "text-gray-600",
-        };
-    }
-  };
-
-  // Format service details
- const formatServiceDetails = (serviceType: string, data: any) => {
-   switch (serviceType) {
-     case "cleaning":
-       const roomCount = Object.values(data.items || {}).reduce(
-         (sum: number, count) => sum + (typeof count === "number" ? count : 0),
-         0
-       );
-       return {
-         title: "House Cleaning",
-         category: data.category || "Standard cleaning",
-         details: `${roomCount} areas selected`,
-         time: data.estimatedTime || "2-4 hours",
-       };
-
-     case "gardening":
-       return {
-         title: "Gardening Services",
-         category: data.category || "Basic Maintenance",
-         details: `${data.services?.length || 0} services • ${
-           data.gardenSize || "Medium"
-         } garden`,
-         time: "2-6 hours",
-       };
-
-     case "laundry":
-       return {
-         title: "Laundry Service",
-         category: data.category || "Standard Service",
-         details: `${data.service || data.title || "Wash & Fold"} • ${
-           data.itemCount || 5
-         } items`,
-         time: data.turnaround || "24-48 hours",
-       };
-
-     case "moving":
-       const totalRooms = Object.values(data.rooms || {}).reduce(
-         (sum: number, count) => sum + (typeof count === "number" ? count : 0),
-         0
-       );
-       return {
-         title: "Moving Services",
-         category: data.category || "Move-out Cleaning",
-         details: `${totalRooms} rooms • ${
-           data.propertySize || "Medium"
-         } property`,
-         time: data.duration || "4-8 hours",
-       };
-
-     default:
-       return {
-         title: "Service",
-         category: "Unknown",
-         details: "No details available",
-         time: "TBD",
-       };
-   }
- };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    console.log("Starting house cleaning booking submission...");
+    console.log("Cleaning Data:", cleaningData);
+    console.log("Customer Info:", customerInfo);
+    console.log("Date/Time:", selectedDate, selectedTime);
 
-    // Save booking data
-    const bookingData = {
-      services,
-      customerInfo,
-      selectedDate,
-      selectedTime,
-      totalPrice: calculateTotalPrice(),
-      bookingId: `HM${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      if (!cleaningData) {
+        throw new Error("No cleaning service selected");
+      }
 
-    localStorage.setItem("currentBooking", JSON.stringify(bookingData));
+      // Get user ID
+      const userId = getUserId();
+      if (!userId) {
+        throw new Error("User ID not found. Please log in again.");
+      }
 
-    setIsLoading(false);
-    router.push("/booking-confirmation");
+      // Prepare the API payload to match your backend exactly
+      const payload = {
+        user_id: userId,
+        cleaningData: {
+          category: cleaningData.category || "Standard Cleaning",
+          package: cleaningData.package || "Standard Package",
+          items: cleaningData.items || {},
+          homeSize: cleaningData.homeSize || "small",
+          frequency: cleaningData.frequency || "one-time",
+          estimatedPrice: cleaningData.estimatedPrice || 0,
+          estimatedTime: cleaningData.estimatedTime || "3-4 hours",
+          preferredTime: selectedTime,
+          specialInstructions:
+            customerInfo.specialInstructions ||
+            cleaningData.specialInstructions ||
+            "",
+          turnaround: cleaningData.turnaround || "2-4 hours",
+        },
+        bookingDetails: {
+          bookingDate: selectedDate,
+          bookingTime: selectedTime.split(" - ")[0], // Extract start time only
+          location: customerInfo.address,
+        },
+        customerInfo: {
+          phone: customerInfo.phone,
+        },
+      };
+
+      console.log("API Payload:", JSON.stringify(payload, null, 2));
+
+      // Get auth token
+      const authToken = Cookies.get("auth_token");
+      console.log("Auth token exists:", !!authToken);
+
+      if (!authToken) {
+        throw new Error("Authentication required. Please log in.");
+      }
+
+      // Call the backend API
+      console.log("Making API request...");
+      const response = await fetch(
+        "http://localhost:3002/api/v1/house-cleaning/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
+
+      console.log("Response status:", response.status);
+
+      let result;
+      const responseText = await response.text();
+      console.log("Raw response:", responseText);
+
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Failed to parse response as JSON:", parseError);
+        throw new Error(
+          `Invalid response from server: ${responseText.substring(0, 200)}`
+        );
+      }
+
+      console.log("Parsed response:", result);
+
+      if (!response.ok) {
+        console.error("API request failed:", response.status, result);
+        throw new Error(
+          result.message || `HTTP ${response.status}: ${response.statusText}`
+        );
+      }
+
+      if (result.success && result.data) {
+        console.log("Booking created successfully, preparing storage data...");
+
+        // Save the complete booking data for confirmation page
+        const bookingForStorage = {
+          id: result.data.cleaningService._id,
+          serviceId: result.data.cleaningService._id,
+          serviceName: result.data.cleaningService.serviceName,
+          serviceCategory: result.data.cleaningService.serviceCategory,
+          serviceRate: result.data.cleaningService.serviceRate,
+          bookingDate: result.data.cleaningService.booking.bookingDate,
+          bookingTime: result.data.cleaningService.booking.bookingTime,
+          location: result.data.cleaningService.booking.location,
+          paymentStatus: result.data.cleaningService.booking.paymentStatus,
+          paymentReference: result.data.payment?.reference,
+          authorizationUrl: result.data.payment?.authorization_url,
+          accessCode: result.data.payment?.access_code,
+          customerInfo: customerInfo,
+          cleaningData: cleaningData,
+          selectedDate: selectedDate,
+          selectedTime: selectedTime,
+          totalPrice: cleaningData.estimatedPrice,
+          createdAt: new Date().toISOString(),
+          serviceType: "cleaning",
+          areas: result.data.cleaningService.areas,
+          roomSizes: result.data.cleaningService.roomSizes,
+          estimatedDuration: result.data.cleaningService.estimatedDuration,
+          pricingBreakdown: result.data.pricing,
+        };
+
+        console.log("Saving booking data to localStorage...");
+        localStorage.setItem("bookingData", JSON.stringify(bookingForStorage));
+
+        // Handle redirect to payment
+        if (result.data.payment?.authorization_url) {
+          console.log(
+            "Redirecting to Paystack:",
+            result.data.payment.authorization_url
+          );
+          setTimeout(() => {
+            window.location.href = result.data.payment.authorization_url;
+          }, 500);
+        } else {
+          console.log("No payment URL, redirecting to confirmation page");
+          router.push("/booking-confirmation");
+        }
+      } else {
+        console.error("Unexpected response format:", result);
+        throw new Error(
+          result.message ||
+            "Failed to create booking - unexpected response format"
+        );
+      }
+    } catch (error) {
+      console.error("Complete error details:", error);
+      let errorMessage = "Failed to process booking. Please try again.";
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+      console.log("Booking submission completed");
+    }
   };
 
   const isFormValid = () => {
@@ -330,7 +265,7 @@ export default function BookingSummaryPage() {
       customerInfo.address &&
       selectedDate &&
       selectedTime &&
-      Object.keys(services).length > 0
+      cleaningData
     );
   };
 
@@ -355,13 +290,22 @@ export default function BookingSummaryPage() {
     return dates;
   };
 
+  // Calculate room count for display
+  const getRoomCount = () => {
+    if (!cleaningData?.items) return 0;
+    return Object.values(cleaningData.items).reduce(
+      (sum, count) => sum + (typeof count === "number" ? count : 0),
+      0
+    );
+  };
+
   return (
     <>
       <Head>
-        <title>Booking Summary | Home Services</title>
+        <title>House Cleaning Booking Summary | Home Services</title>
         <meta
           name="description"
-          content="Review and confirm your service booking"
+          content="Review and confirm your house cleaning booking"
         />
       </Head>
 
@@ -390,17 +334,46 @@ export default function BookingSummaryPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Booking Summary
+              House Cleaning Booking
             </h1>
             <p className="text-sm text-gray-500 hidden md:block">
-              Review your services and book appointment
+              Review and confirm your cleaning service
             </p>
           </div>
         </div>
 
         <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-8">
-          {Object.keys(services).length === 0 ? (
-            // No services selected
+          {/* Error display */}
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Booking Error
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!cleaningData ? (
+            // No service selected
             <div className="bg-white rounded-xl shadow-sm p-8 text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                 <svg
@@ -413,89 +386,93 @@ export default function BookingSummaryPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                   />
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                No Services Selected
+                No Cleaning Service Selected
               </h2>
               <p className="text-gray-600 mb-6">
-                Please select at least one service to continue with your
+                Please select your house cleaning service to continue with
                 booking.
               </p>
               <button
-                onClick={() => router.push("/")}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                onClick={() => router.push("/house-cleaning")}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
-                Browse Services
+                Select Cleaning Service
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Services Summary */}
+              {/* Service Summary */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                    Selected Services
+                    Selected Service
                   </h2>
 
-                  <div className="space-y-4">
-                    {Object.entries(services).map(([serviceType, data]) => {
-                      const theme = getServiceTheme(serviceType);
-                      const details = formatServiceDetails(serviceType, data);
-
-                      return (
-                        <div
-                          key={serviceType}
-                          className={`${theme.bg} ${theme.border} border-2 rounded-lg p-4`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start">
-                              <div
-                                className={`w-10 h-10 rounded-lg ${theme.bg} ${theme.icon} flex items-center justify-center mr-4`}
-                              >
-                                {getServiceIcon(serviceType)}
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-gray-900">
-                                  {details.title}
-                                </h3>
-                                <p
-                                  className={`text-sm ${theme.text} font-medium`}
-                                >
-                                  {details.category}
-                                </p>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {details.details}
-                                </p>
-                                <div className="flex items-center mt-2 text-xs text-gray-500">
-                                  <svg
-                                    className="h-4 w-4 mr-1"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                ₦{(data?.estimatedPrice || 0).toLocaleString()}
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    
-                                  </svg>
-                                  Duration: {details.time}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-lg font-bold text-gray-900">
-                                ₦{(data.estimatedPrice || 0).toLocaleString()}
-                              </p>
-                            </div>
+                  <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start">
+                        <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center mr-4">
+                          <svg
+                            className="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">
+                            House Cleaning
+                          </h3>
+                          <p className="text-sm text-purple-700 font-medium">
+                            {cleaningData.category}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {cleaningData.package} • {getRoomCount()} rooms •{" "}
+                            {cleaningData.homeSize} home
+                          </p>
+                          {cleaningData.frequency !== "one-time" && (
+                            <p className="text-sm text-green-600 font-medium">
+                              {cleaningData.frequency.charAt(0).toUpperCase() +
+                                cleaningData.frequency.slice(1)}{" "}
+                              service
+                            </p>
+                          )}
+                          <div className="flex items-center mt-2 text-xs text-gray-500">
+                            <svg
+                              className="h-4 w-4 mr-1"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            Duration: {cleaningData.estimatedTime}
                           </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900">
+                          ₦{(cleaningData.estimatedPrice || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -521,7 +498,7 @@ export default function BookingSummaryPage() {
                               name: e.target.value,
                             }))
                           }
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           placeholder="Enter your full name"
                         />
                       </div>
@@ -540,7 +517,7 @@ export default function BookingSummaryPage() {
                               phone: e.target.value,
                             }))
                           }
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           placeholder="+234 xxx xxx xxxx"
                         />
                       </div>
@@ -560,7 +537,7 @@ export default function BookingSummaryPage() {
                             email: e.target.value,
                           }))
                         }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="your.email@example.com"
                       />
                     </div>
@@ -578,9 +555,9 @@ export default function BookingSummaryPage() {
                             address: e.target.value,
                           }))
                         }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         rows={3}
-                        placeholder="Enter the full address where services will be performed"
+                        placeholder="Enter the full address where cleaning will be performed"
                       />
                     </div>
 
@@ -594,7 +571,7 @@ export default function BookingSummaryPage() {
                           required
                           value={selectedDate}
                           onChange={(e) => setSelectedDate(e.target.value)}
-                          className="w-full p-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full p-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
                           <option value="">Select a date</option>
                           {getDateOptions().map((date) => (
@@ -613,7 +590,7 @@ export default function BookingSummaryPage() {
                           required
                           value={selectedTime}
                           onChange={(e) => setSelectedTime(e.target.value)}
-                          className="w-full p-3 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full p-3 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
                           <option value="">Select a time</option>
                           {timeSlots.map((slot) => (
@@ -637,9 +614,9 @@ export default function BookingSummaryPage() {
                             specialInstructions: e.target.value,
                           }))
                         }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         rows={3}
-                        placeholder="Any special requests or instructions for our team..."
+                        placeholder="Any special requests or instructions for our cleaning team..."
                       />
                     </div>
                   </form>
@@ -654,27 +631,19 @@ export default function BookingSummaryPage() {
                   </h3>
 
                   <div className="space-y-3 mb-6">
-                    {Object.entries(services).map(([serviceType, data]) => {
-                      const details = formatServiceDetails(serviceType, data);
-                      return (
-                        <div
-                          key={serviceType}
-                          className="flex justify-between items-center py-2 border-b border-gray-100"
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {details.title}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {details.category}
-                            </p>
-                          </div>
-                          <p className="text-sm font-semibold text-gray-900">
-                            ₦{(data.estimatedPrice || 0).toLocaleString()}
-                          </p>
-                        </div>
-                      );
-                    })}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          House Cleaning
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {cleaningData.category}
+                        </p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        ₦{(cleaningData.estimatedPrice || 0).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="border-t border-gray-200 pt-4 mb-6">
@@ -682,18 +651,18 @@ export default function BookingSummaryPage() {
                       <p className="text-lg font-semibold text-gray-900">
                         Total
                       </p>
-                      <p className="text-xl font-bold text-blue-600">
-                        ₦{calculateTotalPrice().toLocaleString()}
+                      <p className="text-xl font-bold text-purple-600">
+                        ₦{(cleaningData.estimatedPrice || 0).toLocaleString()}
                       </p>
                     </div>
                   </div>
 
                   {selectedDate && selectedTime && (
-                    <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                      <h4 className="font-medium text-blue-900 mb-2">
+                    <div className="bg-purple-50 p-4 rounded-lg mb-6">
+                      <h4 className="font-medium text-purple-900 mb-2">
                         Appointment Details
                       </h4>
-                      <p className="text-sm text-blue-700">
+                      <p className="text-sm text-purple-700">
                         📅{" "}
                         {new Date(selectedDate).toLocaleDateString("en-US", {
                           weekday: "long",
@@ -702,7 +671,9 @@ export default function BookingSummaryPage() {
                           day: "numeric",
                         })}
                       </p>
-                      <p className="text-sm text-blue-700">⏰ {selectedTime}</p>
+                      <p className="text-sm text-purple-700">
+                        ⏰ {selectedTime}
+                      </p>
                     </div>
                   )}
 
@@ -711,7 +682,7 @@ export default function BookingSummaryPage() {
                     disabled={!isFormValid() || isLoading}
                     className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-300 ${
                       isFormValid() && !isLoading
-                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+                        ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl"
                         : "bg-gray-300 text-gray-500 cursor-not-allowed"
                     }`}
                   >
@@ -736,10 +707,10 @@ export default function BookingSummaryPage() {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           ></path>
                         </svg>
-                        Processing...
+                        Creating booking & redirecting to payment...
                       </div>
                     ) : (
-                      "Confirm Booking"
+                      "Confirm Booking & Pay"
                     )}
                   </button>
 

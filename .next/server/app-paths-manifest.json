@@ -1,1 +1,6 @@
-{}
+{
+  "/(Landing)/booking/house-cleaning/page": "app/(Landing)/booking/house-cleaning/page.js",
+  "/page": "app/page.js",
+  "/(Landing)/booking-summary/page": "app/(Landing)/booking-summary/page.js",
+  "/(auth)/auth/signin/page": "app/(auth)/auth/signin/page.js"
+}

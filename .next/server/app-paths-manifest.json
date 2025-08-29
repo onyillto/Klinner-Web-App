@@ -1,6 +1,1 @@
-{
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/(Landing)/booking-summary/page": "app/(Landing)/booking-summary/page.js",
-  "/(Landing)/booking/page": "app/(Landing)/booking/page.js",
-  "/(Landing)/booking/house-cleaning/page": "app/(Landing)/booking/house-cleaning/page.js"
-}
+{}

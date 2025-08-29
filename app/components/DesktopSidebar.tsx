@@ -258,18 +258,7 @@ export default function DesktopSidebar() {
           {renderScheduleItems()}
         </div>
 
-        {/* <div>
-          <h3 className="font-bold text-lg text-indigo-600 mb-4">Promotions</h3>
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg">
-            <p className="font-bold mb-1">Weekend Special</p>
-            <p className="text-sm mb-3">
-              Book any service on weekend and get 15% discount
-            </p>
-            <button className="bg-white text-indigo-600 text-sm py-1 px-4 rounded-full font-medium">
-              Claim Now
-            </button>
-          </div>
-        </div> */}
+       
       </div>
 
       {/* Mobile dropdown version - visible only on small/medium screens */}
@@ -342,20 +331,7 @@ export default function DesktopSidebar() {
                 {renderScheduleItems()}
               </div>
 
-              {/* <div>
-                <h3 className="font-bold text-lg text-indigo-600 mb-4">
-                  Promotions
-                </h3>
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-lg">
-                  <p className="font-bold mb-1">Weekend Special</p>
-                  <p className="text-sm mb-3">
-                    Book any service on weekend and get 15% discount
-                  </p>
-                  <button className="bg-white text-indigo-600 text-sm py-1 px-4 rounded-full font-medium">
-                    Claim Now
-                  </button>
-                </div>
-              </div> */}
+             
             </div>
           )}
         </div>

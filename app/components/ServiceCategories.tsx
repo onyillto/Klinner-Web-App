@@ -1,10 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export default function ServiceCategories() {
   const router = useRouter();
-  const [showComingSoon, setShowComingSoon] = useState(null);
 
   const categories = [
     {
@@ -18,7 +16,6 @@ export default function ServiceCategories() {
         "Professional home cleaning services for any size of residence.",
       mainImage: "/images/cleaning-service.jpg",
       images: ["/public/room1.svg", "/public/room1.svg", "/public/room1.svg"],
-      active: true,
     },
     {
       name: "Laundry",
@@ -31,7 +28,6 @@ export default function ServiceCategories() {
         "Wash, dry, and fold laundry services with eco-friendly options available.",
       mainImage: "/images/laundry-service.jpg",
       images: ["/public/room1.svg", "/public/room1.svg", "/public/room1.svg"],
-      active: false,
     },
     {
       name: "Moving",
@@ -49,7 +45,6 @@ export default function ServiceCategories() {
         "/images/moving-3.jpg",
         "/images/moving-4.jpg",
       ],
-      active: false,
     },
     {
       name: "Gardening",
@@ -66,7 +61,6 @@ export default function ServiceCategories() {
         "/images/moving-3.jpg",
         "/images/moving-4.jpg",
       ],
-      active: false,
     },
     {
       name: "Repairs",
@@ -84,31 +78,19 @@ export default function ServiceCategories() {
         "/images/repairs-3.jpg",
         "/images/repairs-4.jpg",
       ],
-      active: false,
     },
   ];
 
   const handleCategoryClick = (category) => {
-    if (category.active) {
-      // Safe localStorage usage
-      if (typeof window !== "undefined" && window.localStorage) {
-        try {
-          localStorage.setItem("selectedService", JSON.stringify(category));
-        } catch (error) {
-          console.warn("localStorage not available:", error);
-        }
+    // Safe localStorage usage
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        localStorage.setItem("selectedService", JSON.stringify(category));
+      } catch (error) {
+        console.warn("localStorage not available:", error);
       }
-      router.push(`/booking?service=${category.name.toLowerCase()}`);
-    } else {
-      // Show coming soon modal
-      setShowComingSoon(category.name);
-      // Auto-hide after 3 seconds
-      setTimeout(() => setShowComingSoon(null), 3000);
     }
-  };
-
-  const closeComingSoonModal = () => {
-    setShowComingSoon(null);
+    router.push(`/booking?service=${category.name.toLowerCase()}`);
   };
 
   return (
@@ -117,42 +99,13 @@ export default function ServiceCategories() {
         Services
       </h2>
 
-      {/* Coming Soon Modal */}
-      {showComingSoon && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 mx-4 max-w-sm w-full shadow-xl animate-pulse">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🚀</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {showComingSoon} Service
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Coming Soon! We're working hard to bring you this service.
-              </p>
-              <button
-                onClick={closeComingSoonModal}
-                className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                Got it!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Mobile view - scrollable row */}
       <div className="lg:hidden overflow-x-auto pb-4 -mx-4 px-4">
         <div className="flex w-full" style={{ minWidth: "min-content" }}>
           {categories.map((category) => (
             <div
               key={category.name}
-              className={`flex flex-col text-black items-center transition-all cursor-pointer mr-6 w-20 relative ${
-                category.active
-                  ? "opacity-100 hover:scale-105"
-                  : "opacity-70 hover:opacity-90"
-              }`}
+              className="flex flex-col text-black items-center transition-all cursor-pointer mr-6 w-20 hover:scale-105"
               onClick={() => handleCategoryClick(category)}
               role="button"
               tabIndex={0}
@@ -163,31 +116,13 @@ export default function ServiceCategories() {
               }}
             >
               <div
-                className={`w-16 h-16 ${
-                  category.color
-                } rounded-full flex items-center justify-center text-2xl mb-2 relative transition-all ${
-                  !category.active ? "grayscale" : ""
-                }`}
+                className={`w-16 h-16 ${category.color} rounded-full flex items-center justify-center text-2xl mb-2 transition-all`}
               >
                 <span>{category.icon}</span>
-                {!category.active && (
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">!</span>
-                  </div>
-                )}
               </div>
-              <span
-                className={`text-sm text-center whitespace-nowrap ${
-                  category.active ? "text-black font-medium" : "text-gray-500"
-                }`}
-              >
+              <span className="text-sm text-center whitespace-nowrap text-black font-medium">
                 {category.name}
               </span>
-              {!category.active && (
-                <span className="text-xs text-orange-600 font-medium mt-1">
-                  Soon
-                </span>
-              )}
             </div>
           ))}
         </div>
@@ -198,11 +133,7 @@ export default function ServiceCategories() {
         {categories.map((category) => (
           <div
             key={category.name}
-            className={`flex flex-col items-center transition-all cursor-pointer relative ${
-              category.active
-                ? "opacity-100 hover:scale-105"
-                : "opacity-70 hover:opacity-90"
-            }`}
+            className="flex flex-col items-center transition-all cursor-pointer hover:scale-105"
             onClick={() => handleCategoryClick(category)}
             role="button"
             tabIndex={0}
@@ -213,40 +144,16 @@ export default function ServiceCategories() {
             }}
           >
             <div
-              className={`w-20 h-20 ${
-                category.color
-              } rounded-full flex items-center justify-center text-3xl mb-2 relative transition-all ${
-                !category.active ? "grayscale" : ""
-              }`}
+              className={`w-20 h-20 ${category.color} rounded-full flex items-center justify-center text-3xl mb-2 transition-all`}
             >
               <span>{category.icon}</span>
-              {!category.active && (
-                <div className="absolute -top-1 -right-1 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">!</span>
-                </div>
-              )}
             </div>
-            <span
-              className={`text-base ${
-                category.active ? "text-black font-medium" : "text-gray-500"
-              }`}
-            >
+            <span className="text-base text-black font-medium">
               {category.name}
             </span>
-            {!category.active && (
-              <span className="text-sm text-orange-600 font-medium mt-1">
-                Coming Soon
-              </span>
-            )}
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        .grayscale {
-          filter: grayscale(100%);
-        }
-      `}</style>
     </div>
   );
 }

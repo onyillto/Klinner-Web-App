@@ -134,9 +134,9 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-[#1E1E1E]">
+          <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center text-[#1E1E1E]">
             Create Your Account
-          </h1> */}
+          </h1>
           {/* <p className="text-sm sm:text-base text-center mb-4 text-[#373737B2]">
             Sign up with Facebook or Google to get started
           </p>

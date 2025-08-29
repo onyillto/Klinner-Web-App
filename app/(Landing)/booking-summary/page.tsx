@@ -2,393 +2,138 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Head from "next/head";
-import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
-// Pricing configuration based on room types and sizes
-const PRICING_CONFIG = {
-  // Base service fee
-  baseServiceFee: 10000, // ₦10,000 minimum service charge
-
-  // Room-specific pricing with size variations
-  roomPricing: {
-    "Living Room": {
-      small: 8000, // Up to 15 sqm
-      medium: 12000, // 15-30 sqm
-      large: 18000, // 30+ sqm
-      description: "Sofa cleaning, floor mopping, dusting furniture",
-    },
-    Bedroom: {
-      small: 6000, // Single/twin room
-      medium: 9000, // Double/queen room
-      large: 13000, // Master bedroom with walk-in closet
-      description: "Bed making, floor cleaning, wardrobe organization",
-    },
-    Kitchen: {
-      small: 10000, // Kitchenette/galley
-      medium: 15000, // Standard kitchen
-      large: 22000, // Large kitchen with island
-      description: "Appliance cleaning, countertop sanitization, floor mopping",
-    },
-    Bathroom: {
-      small: 8000, // Half bath/powder room
-      medium: 12000, // Full bathroom
-      large: 16000, // Master bathroom with tub
-      description: "Deep sanitization, tile scrubbing, mirror cleaning",
-    },
-    "Dining Room": {
-      small: 5000, // Small dining area
-      medium: 8000, // Standard dining room
-      large: 12000, // Large formal dining room
-      description: "Table cleaning, floor mopping, chandelier dusting",
-    },
-    "Office/Study": {
-      small: 4000, // Small home office
-      medium: 7000, // Standard office
-      large: 10000, // Large office with multiple desks
-      description: "Desk organization, electronics dusting, floor cleaning",
-    },
-    "Balcony/Terrace": {
-      small: 3000, // Small balcony
-      medium: 5000, // Medium terrace
-      large: 8000, // Large outdoor space
-      description: "Sweeping, furniture cleaning, plant area tidying",
-    },
-    "Laundry Room": {
-      small: 4000, // Basic laundry area
-      medium: 6000, // Standard laundry room
-      large: 8000, // Large laundry room with storage
-      description: "Machine cleaning, floor mopping, organizing supplies",
-    },
-    Garage: {
-      small: 5000, // Single car garage
-      medium: 8000, // Double car garage
-      large: 12000, // Large garage with storage
-      description: "Floor sweeping, basic organization, cobweb removal",
-    },
-    Staircase: {
-      small: 3000, // Single flight
-      medium: 5000, // Two flights
-      large: 7000, // Multiple flights or curved stairs
-      description: "Step cleaning, railing polishing, carpet/floor care",
-    },
-  },
-
-  // Service type multipliers
-  serviceMultipliers: {
-    "Standard Home Cleaning": 1.0,
-    "Deep Cleaning": 1.5,
-    "Post-Construction Cleaning": 2.0,
-    "Move-in/Move-out Cleaning": 1.8,
-    "Office Cleaning": 1.2,
-  },
-
-  // Frequency discounts
-  frequencyDiscounts: {
-    "One-time": 0,
-    Weekly: 0.15, // 15% discount
-    "Bi-weekly": 0.1, // 10% discount
-    Monthly: 0.05, // 5% discount
-  },
-};
-
-export default function BookingSummary() {
+export default function BookingSummaryPage() {
   const router = useRouter();
-  const [bookingData, setBookingData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedSizes, setSelectedSizes] = useState({});
+  type ServiceData = {
+    estimatedPrice?: number;
+    [key: string]: any;
+  };
 
+  type Services = {
+    cleaning?: ServiceData;
+    gardening?: ServiceData;
+    laundry?: ServiceData;
+    moving?: ServiceData;
+    [key: string]: ServiceData | undefined;
+  };
+
+  const [services, setServices] = useState<Services>({});
+  const [customerInfo, setCustomerInfo] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    specialInstructions: "",
+  });
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Available time slots
+  const timeSlots = [
+    "8:00 AM - 10:00 AM",
+    "10:00 AM - 12:00 PM",
+    "12:00 PM - 2:00 PM",
+    "2:00 PM - 4:00 PM",
+    "4:00 PM - 6:00 PM",
+    "6:00 PM - 8:00 PM",
+  ];
+
+  // Detect if viewing on desktop
   useEffect(() => {
-    // Load booking data from localStorage
-    const loadBookingData = () => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Load all service data from localStorage
+  useEffect(() => {
+    const loadedServices: Services = {};
+
+    // Load house cleaning data
+    const cleaningData = localStorage.getItem("cleaningItems");
+    if (cleaningData) {
       try {
-        const storedBookingData = localStorage.getItem("bookingData");
-        if (storedBookingData) {
-          const parsed = JSON.parse(storedBookingData);
-          setBookingData(parsed);
-
-          // Initialize default sizes for each area
-          const defaultSizes = {};
-          if (parsed.areas) {
-            parsed.areas.forEach((area) => {
-              defaultSizes[area] = "medium"; // Default to medium size
-            });
-          }
-          setSelectedSizes(defaultSizes);
-        } else {
-          router.push("/house-cleaning");
-        }
-      } catch (error) {
-        console.error("Error loading booking data:", error);
-      } finally {
-        setLoading(false);
+        const parsed = JSON.parse(cleaningData);
+        loadedServices.cleaning = parsed;
+      } catch (e) {
+        console.error("Error parsing cleaning data:", e);
       }
-    };
-
-    loadBookingData();
-  }, [router]);
-
-  // Handle size selection for each room
-  const handleSizeChange = (room, size) => {
-    setSelectedSizes((prev) => ({
-      ...prev,
-      [room]: size,
-    }));
-  };
-
-  // Calculate price for individual room
-  const calculateRoomPrice = (roomType, size) => {
-    const roomConfig = PRICING_CONFIG.roomPricing[roomType];
-    if (!roomConfig) return 5000; // Default price for unlisted rooms
-    return roomConfig[size] || roomConfig.medium;
-  };
-
-  // Calculate total estimated time
-  const calculateEstimatedTime = () => {
-    if (!bookingData?.areas) return "N/A";
-
-    let totalMinutes = 60; // Base time for setup and travel
-
-    bookingData.areas.forEach((area) => {
-      const size = selectedSizes[area] || "medium";
-      // Time estimation based on room type and size
-      switch (size) {
-        case "small":
-          totalMinutes += 30;
-          break;
-        case "medium":
-          totalMinutes += 45;
-          break;
-        case "large":
-          totalMinutes += 75;
-          break;
-        default:
-          totalMinutes += 45;
-      }
-    });
-
-    // Apply service type multiplier
-    const serviceType = bookingData.serviceCategory || "Standard Home Cleaning";
-    const multiplier = PRICING_CONFIG.serviceMultipliers[serviceType] || 1.0;
-    totalMinutes = Math.round(totalMinutes * multiplier);
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    return `${hours}h ${minutes > 0 ? `${minutes}m` : ""}`;
-  };
-
-  // Calculate detailed pricing breakdown
-  const calculatePricing = () => {
-    if (!bookingData?.areas)
-      return { breakdown: [], subtotal: 0, total: 0, savings: 0 };
-
-    let subtotal = PRICING_CONFIG.baseServiceFee;
-    const breakdown = [];
-
-    // Add base service fee
-    breakdown.push({
-      item: "Base Service Fee",
-      description: "Minimum service charge, equipment, and travel",
-      quantity: 1,
-      price: PRICING_CONFIG.baseServiceFee,
-      total: PRICING_CONFIG.baseServiceFee,
-    });
-
-    // Calculate room-specific pricing
-    const roomCounts = {};
-    bookingData.areas.forEach((area) => {
-      roomCounts[area] = (roomCounts[area] || 0) + 1;
-    });
-
-    Object.entries(roomCounts).forEach(([roomType, count]) => {
-      const size = selectedSizes[roomType] || "medium";
-      const roomPrice = calculateRoomPrice(roomType, size);
-      const roomTotal = Number(roomPrice) * Number(count);
-      subtotal += roomTotal;
-
-      breakdown.push({
-        item: `${roomType} (${size})`,
-        description:
-          PRICING_CONFIG.roomPricing[roomType]?.description ||
-          "Standard cleaning",
-        quantity: count,
-        price: roomPrice,
-        total: roomTotal,
-      });
-    });
-
-    // Apply service type multiplier
-    const serviceType = bookingData.serviceCategory || "Standard Home Cleaning";
-    const serviceMultiplier =
-      PRICING_CONFIG.serviceMultipliers[serviceType] || 1.0;
-
-    if (serviceMultiplier !== 1.0) {
-      const multiplierAmount = subtotal * (serviceMultiplier - 1);
-      subtotal += multiplierAmount;
-
-      breakdown.push({
-        item: `${serviceType} Premium`,
-        description: `Additional charge for specialized ${serviceType.toLowerCase()}`,
-        quantity: 1,
-        price: multiplierAmount,
-        total: multiplierAmount,
-      });
     }
 
-    // Apply frequency discount (if any)
-    const frequency = bookingData.frequency || "One-time";
-    const discount = PRICING_CONFIG.frequencyDiscounts[frequency] || 0;
-    const savings = subtotal * discount;
-    const total = subtotal - savings;
-
-    return {
-      breakdown,
-      subtotal: Math.round(subtotal),
-      savings: Math.round(savings),
-      total: Math.round(total),
-      serviceMultiplier,
-      discount,
-    };
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatTime = (timeString) => {
-    if (!timeString) return "";
-    const [hours, minutes] = timeString.split(":");
-    const hour = parseInt(hours, 10);
-    if (hour === 0) return "12:00 AM";
-    if (hour < 12) return `${hour}:${minutes} AM`;
-    if (hour === 12) return `12:${minutes} PM`;
-    return `${hour - 12}:${minutes} PM`;
-  };
-
-  const handleConfirmBooking = async () => {
-    setLoading(true);
-
-    try {
-      const authToken = Cookies.get("auth_token");
-      if (!authToken) {
-        alert("Authentication required. Please log in again.");
-        setLoading(false);
-        return;
+    // Load gardening data
+    const gardeningData = localStorage.getItem("gardeningServices");
+    if (gardeningData) {
+      try {
+        const parsed = JSON.parse(gardeningData);
+        loadedServices.gardening = parsed;
+      } catch (e) {
+        console.error("Error parsing gardening data:", e);
       }
-
-      const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
-      const userId = userData.user_id;
-
-      if (!userId) {
-        alert("User ID not found. Please log in again.");
-        setLoading(false);
-        return;
-      }
-
-      const pricing = calculatePricing();
-
-      // ✅ FIXED: Send the total amount directly (no division by 100)
-      const serviceRate = pricing.total;
-
-      // 🔍 DEBUG LOGS (you can remove these later)
-      console.log("🟢 FRONTEND DEBUG - AFTER FIX:");
-      console.log("💰 pricing.total:", pricing.total);
-      console.log("💰 serviceRate:", serviceRate);
-      console.log(
-        "💰 Expected Paystack amount: ₦" + serviceRate.toLocaleString()
-      );
-
-      const serviceData = {
-        user_id: userId,
-        serviceName: bookingData.serviceName || "Cleaning",
-        serviceCategory:
-          bookingData.serviceCategory || "Standard Home Cleaning",
-        areas: bookingData.areas || [],
-        roomSizes: selectedSizes,
-        bookingDate: bookingData.bookingDate,
-        bookingTime: bookingData.bookingTime,
-        location: bookingData.location,
-        serviceRate, // ✅ Now this will be 19000 instead of "190.00"
-        estimatedDuration: calculateEstimatedTime(),
-        pricingBreakdown: pricing.breakdown,
-      };
-
-      console.log("📤 What we're sending to backend:", serviceData.serviceRate);
-
-      const response = await fetch(
-        "http://localhost:3002/api/v1/service/create-service",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify(serviceData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        alert(`Server error: ${response.status} ${errorText}`);
-        setLoading(false);
-        return;
-      }
-
-      const data = await response.json();
-      const { authorization_url, access_code, reference } = data.data.payment;
-      const serviceId = data.data.cleaningService._id;
-
-      const confirmedBooking = {
-        ...bookingData,
-        id: serviceId,
-        confirmed: true,
-        paymentStatus: "pending",
-        paymentReference: reference,
-        finalPrice: pricing.total,
-        roomSizes: selectedSizes,
-        estimatedDuration: calculateEstimatedTime(),
-      };
-
-      localStorage.setItem("bookingData", JSON.stringify(confirmedBooking));
-      window.location.href = authorization_url;
-    } catch (error) {
-      console.error("Error during booking confirmation:", error);
-      setLoading(false);
-      alert(`Booking failed: ${error.message}`);
     }
+
+    // Load laundry data
+    const laundryData = localStorage.getItem("laundryOption");
+    if (laundryData) {
+      try {
+        const parsed = JSON.parse(laundryData);
+        loadedServices.laundry = parsed;
+      } catch (e) {
+        console.error("Error parsing laundry data:", e);
+      }
+    }
+
+    // Load moving data
+    const movingData = localStorage.getItem("moveOutRooms");
+    if (movingData) {
+      try {
+        const parsed = JSON.parse(movingData);
+        loadedServices.moving = parsed;
+      } catch (e) {
+        console.error("Error parsing moving data:", e);
+      }
+    }
+
+    setServices(loadedServices);
+  }, []);
+
+  // Calculate total price
+  const calculateTotalPrice = () => {
+    let total = 0;
+
+    if (services.cleaning?.estimatedPrice) {
+      total += parseInt(String(services.cleaning.estimatedPrice)) || 0;
+    }
+
+    if (services.gardening?.estimatedPrice) {
+      total += parseInt(String(services.gardening.estimatedPrice)) || 0;
+    }
+
+    if (services.laundry?.estimatedPrice) {
+      total += parseInt(String(services.laundry.estimatedPrice)) || 0;
+    }
+
+    if (services.moving?.estimatedPrice) {
+      total += parseInt(String(services.moving.estimatedPrice)) || 0;
+    }
+
+    return total;
   };
 
-  // ✅ FIXED: Edit button uses router.back() instead of router.push()
-  const handleEditBooking = () => {
-    router.back();
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen text-black flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-700">Loading your booking details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!bookingData) {
-    return (
-      <div className="min-h-screen text-black flex items-center justify-center bg-gray-50">
-        <div className="text-center p-6 bg-white rounded-lg shadow-md">
+  // Get service icon
+  const getServiceIcon = (serviceType) => {
+    switch (serviceType) {
+      case "cleaning":
+        return (
           <svg
-            className="w-16 h-16 text-red-500 mx-auto mb-4"
+            className="h-6 w-6"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -396,42 +141,231 @@ export default function BookingSummary() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              strokeWidth={1.5}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
             />
           </svg>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
-            No Booking Data Found
-          </h2>
-          <p className="text-gray-600 mb-4">
-            We couldn't find your booking information. Let's start over.
-          </p>
-          <button
-            onClick={() => router.push("/house-cleaning")}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+        );
+      case "gardening":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            Start New Booking
-          </button>
-        </div>
-      </div>
-    );
-  }
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+            />
+          </svg>
+        );
+      case "laundry":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        );
+      case "moving":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
 
-  const pricing = calculatePricing();
+  // Get service color theme
+  const getServiceTheme = (serviceType) => {
+    switch (serviceType) {
+      case "cleaning":
+        return {
+          bg: "bg-purple-50",
+          border: "border-purple-200",
+          text: "text-purple-700",
+          icon: "text-purple-600",
+        };
+      case "gardening":
+        return {
+          bg: "bg-green-50",
+          border: "border-green-200",
+          text: "text-green-700",
+          icon: "text-green-600",
+        };
+      case "laundry":
+        return {
+          bg: "bg-purple-50",
+          border: "border-purple-200",
+          text: "text-purple-700",
+          icon: "text-purple-600",
+        };
+      case "moving":
+        return {
+          bg: "bg-blue-50",
+          border: "border-blue-200",
+          text: "text-blue-700",
+          icon: "text-blue-600",
+        };
+      default:
+        return {
+          bg: "bg-gray-50",
+          border: "border-gray-200",
+          text: "text-gray-700",
+          icon: "text-gray-600",
+        };
+    }
+  };
+
+  // Format service details
+ const formatServiceDetails = (serviceType: string, data: any) => {
+   switch (serviceType) {
+     case "cleaning":
+       const roomCount = Object.values(data.items || {}).reduce(
+         (sum: number, count) => sum + (typeof count === "number" ? count : 0),
+         0
+       );
+       return {
+         title: "House Cleaning",
+         category: data.category || "Standard cleaning",
+         details: `${roomCount} areas selected`,
+         time: data.estimatedTime || "2-4 hours",
+       };
+
+     case "gardening":
+       return {
+         title: "Gardening Services",
+         category: data.category || "Basic Maintenance",
+         details: `${data.services?.length || 0} services • ${
+           data.gardenSize || "Medium"
+         } garden`,
+         time: "2-6 hours",
+       };
+
+     case "laundry":
+       return {
+         title: "Laundry Service",
+         category: data.category || "Standard Service",
+         details: `${data.service || data.title || "Wash & Fold"} • ${
+           data.itemCount || 5
+         } items`,
+         time: data.turnaround || "24-48 hours",
+       };
+
+     case "moving":
+       const totalRooms = Object.values(data.rooms || {}).reduce(
+         (sum: number, count) => sum + (typeof count === "number" ? count : 0),
+         0
+       );
+       return {
+         title: "Moving Services",
+         category: data.category || "Move-out Cleaning",
+         details: `${totalRooms} rooms • ${
+           data.propertySize || "Medium"
+         } property`,
+         time: data.duration || "4-8 hours",
+       };
+
+     default:
+       return {
+         title: "Service",
+         category: "Unknown",
+         details: "No details available",
+         time: "TBD",
+       };
+   }
+ };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Save booking data
+    const bookingData = {
+      services,
+      customerInfo,
+      selectedDate,
+      selectedTime,
+      totalPrice: calculateTotalPrice(),
+      bookingId: `HM${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem("currentBooking", JSON.stringify(bookingData));
+
+    setIsLoading(false);
+    router.push("/booking-confirmation");
+  };
+
+  const isFormValid = () => {
+    return (
+      customerInfo.name &&
+      customerInfo.email &&
+      customerInfo.phone &&
+      customerInfo.address &&
+      selectedDate &&
+      selectedTime &&
+      Object.keys(services).length > 0
+    );
+  };
+
+  // Generate date options (next 14 days)
+  const getDateOptions = () => {
+    const dates = [];
+    const today = new Date();
+
+    for (let i = 1; i <= 14; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push({
+        value: date.toISOString().split("T")[0],
+        label: date.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        }),
+      });
+    }
+
+    return dates;
+  };
 
   return (
     <>
       <Head>
         <title>Booking Summary | Home Services</title>
-        <meta name="description" content="Review your booking details" />
+        <meta
+          name="description"
+          content="Review and confirm your service booking"
+        />
       </Head>
 
-      <div className="min-h-screen text-black bg-gray-50">
-        {/* Top service info banner */}
-        <div className="bg-gradient-to-r from-purple-700 to-purple-900 text-white p-3 text-center">
-          <p className="text-sm">Professional Cleaning Services</p>
-        </div>
-
+      <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white p-4 flex items-center border-b shadow-sm">
           <button
@@ -459,19 +393,18 @@ export default function BookingSummary() {
               Booking Summary
             </h1>
             <p className="text-sm text-gray-500 hidden md:block">
-              Review your cleaning service details
+              Review your services and book appointment
             </p>
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-8 pb-32">
-          {/* Service Details */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3">
+        <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-8">
+          {Object.keys(services).length === 0 ? (
+            // No services selected
+            <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
+                  className="h-8 w-8 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -480,260 +413,344 @@ export default function BookingSummary() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">
-                  Service Details
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Overview of your cleaning service
-                </p>
-              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                No Services Selected
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Please select at least one service to continue with your
+                booking.
+              </p>
+              <button
+                onClick={() => router.push("/")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                Browse Services
+              </button>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Services Summary */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                    Selected Services
+                  </h2>
 
-            <div className="space-y-4">
-              <div className="border-b pb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Service Type</span>
-                  <span className="font-medium text-gray-900">
-                    {bookingData.serviceCategory || "Standard Home Cleaning"}
-                  </span>
+                  <div className="space-y-4">
+                    {Object.entries(services).map(([serviceType, data]) => {
+                      const theme = getServiceTheme(serviceType);
+                      const details = formatServiceDetails(serviceType, data);
+
+                      return (
+                        <div
+                          key={serviceType}
+                          className={`${theme.bg} ${theme.border} border-2 rounded-lg p-4`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start">
+                              <div
+                                className={`w-10 h-10 rounded-lg ${theme.bg} ${theme.icon} flex items-center justify-center mr-4`}
+                              >
+                                {getServiceIcon(serviceType)}
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900">
+                                  {details.title}
+                                </h3>
+                                <p
+                                  className={`text-sm ${theme.text} font-medium`}
+                                >
+                                  {details.category}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {details.details}
+                                </p>
+                                <div className="flex items-center mt-2 text-xs text-gray-500">
+                                  <svg
+                                    className="h-4 w-4 mr-1"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                ₦{(data?.estimatedPrice || 0).toLocaleString()}
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    
+                                  </svg>
+                                  Duration: {details.time}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-gray-900">
+                                ₦{(data.estimatedPrice || 0).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Customer Information Form */}
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                    Contact Information
+                  </h2>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={customerInfo.name}
+                          onChange={(e) =>
+                            setCustomerInfo((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter your full name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={customerInfo.phone}
+                          onChange={(e) =>
+                            setCustomerInfo((prev) => ({
+                              ...prev,
+                              phone: e.target.value,
+                            }))
+                          }
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="+234 xxx xxx xxxx"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={customerInfo.email}
+                        onChange={(e) =>
+                          setCustomerInfo((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Service Address *
+                      </label>
+                      <textarea
+                        required
+                        value={customerInfo.address}
+                        onChange={(e) =>
+                          setCustomerInfo((prev) => ({
+                            ...prev,
+                            address: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={3}
+                        placeholder="Enter the full address where services will be performed"
+                      />
+                    </div>
+
+                    {/* Date and Time Selection */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Preferred Date *
+                        </label>
+                        <select
+                          required
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="w-full p-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select a date</option>
+                          {getDateOptions().map((date) => (
+                            <option key={date.value} value={date.value}>
+                              {date.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Preferred Time *
+                        </label>
+                        <select
+                          required
+                          value={selectedTime}
+                          onChange={(e) => setSelectedTime(e.target.value)}
+                          className="w-full p-3 border text-gray-900 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select a time</option>
+                          {timeSlots.map((slot) => (
+                            <option key={slot} value={slot}>
+                              {slot}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Special Instructions (Optional)
+                      </label>
+                      <textarea
+                        value={customerInfo.specialInstructions}
+                        onChange={(e) =>
+                          setCustomerInfo((prev) => ({
+                            ...prev,
+                            specialInstructions: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={3}
+                        placeholder="Any special requests or instructions for our team..."
+                      />
+                    </div>
+                  </form>
                 </div>
               </div>
 
-              <div className="border-b pb-4">
-                <div className="flex justify-between mb-4">
-                  <span className="text-gray-600">Areas to Clean</span>
-                  <span className="font-medium text-gray-900">
-                    {bookingData.areas?.length || 0} areas
-                  </span>
-                </div>
+              {/* Booking Summary Sidebar */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Booking Summary
+                  </h3>
 
-                {/* Room size selection */}
-                <div className="space-y-4">
-                  {bookingData.areas?.map((area, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center">
-                          <svg
-                            className="h-5 w-5 text-purple-500 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                          <span className="font-medium text-gray-800">
-                            {area}
-                          </span>
+                  <div className="space-y-3 mb-6">
+                    {Object.entries(services).map(([serviceType, data]) => {
+                      const details = formatServiceDetails(serviceType, data);
+                      return (
+                        <div
+                          key={serviceType}
+                          className="flex justify-between items-center py-2 border-b border-gray-100"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {details.title}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {details.category}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900">
+                            ₦{(data.estimatedPrice || 0).toLocaleString()}
+                          </p>
                         </div>
-                        <span className="text-sm font-semibold text-purple-600">
-                          ₦
-                          {calculateRoomPrice(
-                            area,
-                            selectedSizes[area] || "medium"
-                          ).toLocaleString()}
-                        </span>
-                      </div>
+                      );
+                    })}
+                  </div>
 
-                      <div className="flex gap-2">
-                        {["small", "medium", "large"].map((size) => (
-                          <button
-                            key={size}
-                            onClick={() => handleSizeChange(area, size)}
-                            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                              selectedSizes[area] === size
-                                ? "bg-purple-600 text-white"
-                                : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-100"
-                            }`}
-                          >
-                            {size.charAt(0).toUpperCase() + size.slice(1)}
-                          </button>
-                        ))}
-                      </div>
-
-                      <p className="text-xs text-gray-500 mt-2">
-                        {PRICING_CONFIG.roomPricing[area]?.description ||
-                          "Standard cleaning included"}
+                  <div className="border-t border-gray-200 pt-4 mb-6">
+                    <div className="flex justify-between items-center">
+                      <p className="text-lg font-semibold text-gray-900">
+                        Total
+                      </p>
+                      <p className="text-xl font-bold text-blue-600">
+                        ₦{calculateTotalPrice().toLocaleString()}
                       </p>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-b pb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Estimated Duration</span>
-                  <span className="font-medium text-purple-600">
-                    {calculateEstimatedTime()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Schedule Details */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">
-                  Schedule Details
-                </h2>
-                <p className="text-sm text-gray-500">
-                  When and where we'll be cleaning
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="border-b pb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Date</span>
-                  <span className="font-medium text-gray-900">
-                    {formatDate(bookingData.bookingDate)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-b pb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Time</span>
-                  <span className="font-medium text-gray-900">
-                    {formatTime(bookingData.bookingTime)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-b pb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Location</span>
-                  <span className="font-medium text-gray-900">
-                    {bookingData.location}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Detailed Pricing Breakdown */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">
-                  Pricing Breakdown
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Detailed cost calculation
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {pricing.breakdown.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-start py-2 border-b border-gray-100 last:border-b-0"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <span className="font-medium text-gray-900">
-                        {item.item}
-                      </span>
-                      {item.quantity > 1 && (
-                        <span className="text-sm text-gray-500 ml-2">
-                          ×{item.quantity}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {item.description}
-                    </p>
                   </div>
-                  <span className="font-medium text-gray-900 ml-4">
-                    ₦{item.total.toLocaleString()}
-                  </span>
-                </div>
-              ))}
 
-              {pricing.savings > 0 && (
-                <div className="flex justify-between items-center py-2 text-green-600">
-                  <span className="font-medium">
-                    Frequency Discount ({Math.round(pricing.discount * 100)}%)
-                  </span>
-                  <span className="font-medium">
-                    -₦{pricing.savings.toLocaleString()}
-                  </span>
-                </div>
-              )}
+                  {selectedDate && selectedTime && (
+                    <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                      <h4 className="font-medium text-blue-900 mb-2">
+                        Appointment Details
+                      </h4>
+                      <p className="text-sm text-blue-700">
+                        📅{" "}
+                        {new Date(selectedDate).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                      <p className="text-sm text-blue-700">⏰ {selectedTime}</p>
+                    </div>
+                  )}
 
-              <div className="pt-4 border-t-2 border-gray-200">
-                <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold text-gray-900">Total</span>
-                  <span className="text-2xl font-bold text-purple-600">
-                    ₦{pricing.total.toLocaleString()}
-                  </span>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!isFormValid() || isLoading}
+                    className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-300 ${
+                      isFormValid() && !isLoading
+                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-current"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Processing...
+                      </div>
+                    ) : (
+                      "Confirm Booking"
+                    )}
+                  </button>
+
+                  <p className="text-xs text-gray-500 text-center mt-4">
+                    By confirming, you agree to our terms of service and privacy
+                    policy.
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Fixed bottom action buttons */}
-        <div className="fixed bottom-0 mt-6 left-0 right-0 p-4 bg-white border-t shadow-md">
-          <div className="max-w-3xl mx-auto flex flex-col md:flex-row gap-3">
-            <button
-              onClick={handleEditBooking}
-              className="py-3 px-6 border border-purple-600 text-purple-600 rounded-xl text-lg font-medium hover:bg-purple-50 transition-colors md:flex-1"
-            >
-              Edit Booking
-            </button>
-            <button
-              onClick={handleConfirmBooking}
-              className="py-3 px-6 bg-purple-600 text-white rounded-xl text-lg font-medium shadow-lg hover:bg-purple-700 transition-colors md:flex-1"
-            >
-              Confirm & Pay ₦{pricing.total.toLocaleString()}
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </>

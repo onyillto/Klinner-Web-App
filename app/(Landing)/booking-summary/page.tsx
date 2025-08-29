@@ -235,7 +235,7 @@ export default function HouseCleaningBookingSummaryPage() {
           }, 500);
         } else {
           console.log("No payment URL, redirecting to confirmation page");
-          router.push("/booking-confirmation");
+          router.push("/house-cleaning-booking-confirmation");
         }
       } else {
         console.error("Unexpected response format:", result);

@@ -1,6 +1,5 @@
 {
-  "/(Landing)/booking-summary/page": "app/(Landing)/booking-summary/page.js",
-  "/(Landing)/booking/house-cleaning/page": "app/(Landing)/booking/house-cleaning/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js",
   "/(auth)/auth/signin/page": "app/(auth)/auth/signin/page.js"
 }

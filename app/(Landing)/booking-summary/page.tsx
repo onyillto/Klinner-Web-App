@@ -155,7 +155,7 @@ export default function HouseCleaningBookingSummaryPage() {
       // Call the backend API
       console.log("Making API request...");
       const response = await fetch(
-        "http://localhost:3002/api/v1/house-cleaning/create",
+        "https://klinner.onrender.com/api/v1/house-cleaning/create",
         {
           method: "POST",
           headers: {
@@ -293,7 +293,7 @@ export default function HouseCleaningBookingSummaryPage() {
   // Calculate room count for display
   const getRoomCount = () => {
     if (!cleaningData?.items) return 0;
-    return Object.values(cleaningData.items).reduce(
+    return Object.values(cleaningData.items).reduce<number>(
       (sum, count) => sum + (typeof count === "number" ? count : 0),
       0
     );

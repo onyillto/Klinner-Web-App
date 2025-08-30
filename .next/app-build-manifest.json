@@ -20,6 +20,21 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(auth)/auth/signin/page.js"
+    ],
+    "/(Landing)/booking/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(Landing)/booking/page.js"
+    ],
+    "/(Landing)/booking/house-cleaning/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(Landing)/booking/house-cleaning/page.js"
+    ],
+    "/(Landing)/booking-summary/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(Landing)/booking-summary/page.js"
     ]
   }
 }

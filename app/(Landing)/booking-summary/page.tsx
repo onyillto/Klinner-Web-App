@@ -155,7 +155,7 @@ export default function HouseCleaningBookingSummaryPage() {
       // Call the backend API
       console.log("Making API request...");
       const response = await fetch(
-        "https://klinner.onrender.com/api/v1/house-cleaning/create",
+        "http://localhost:3002/api/v1/house-cleaning/create",
         {
           method: "POST",
           headers: {

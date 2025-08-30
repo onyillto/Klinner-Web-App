@@ -241,7 +241,7 @@ function CleaningServiceDetails({
 }) {
   const getRoomCount = () => {
     if (!bookingData.cleaningData?.items) return 0;
-    return Object.values(bookingData.cleaningData.items).reduce(
+    return Object.values(bookingData.cleaningData.items).reduce<number>(
       (sum, count) => sum + (typeof count === "number" ? count : 0),
       0
     );
@@ -250,7 +250,7 @@ function CleaningServiceDetails({
   const getSelectedRooms = () => {
     if (!bookingData.cleaningData?.items) return [];
     return Object.entries(bookingData.cleaningData.items)
-      .filter(([_, count]) => count > 0)
+      .filter(([_, count]) => typeof count === 'number' && count > 0)
       .map(([room, count]) => `${room} (${count})`)
       .join(", ");
   };

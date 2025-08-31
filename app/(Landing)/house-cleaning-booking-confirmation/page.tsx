@@ -11,17 +11,35 @@ function PaymentVerificationContent() {
   const [status, setStatus] = useState("verifying");
   const [message, setMessage] = useState("Verifying your payment...");
   const [bookingData, setBookingData] = useState(null);
+  const [hasRun, setHasRun] = useState(false);
 
   useEffect(() => {
+    // Debug logs to understand what's happening
+    console.log("Component render - searchParams:", searchParams);
+    console.log("All params:", searchParams ? Object.fromEntries(searchParams.entries()) : "null");
+    console.log("Current status:", status);
+    console.log("Has run:", hasRun);
+
+    // Prevent multiple runs and ensure searchParams is available
+    if (hasRun || !searchParams) return;
+
     const verifyPayment = async () => {
       try {
+        // Small delay to ensure searchParams is fully loaded
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const reference = searchParams.get("reference");
+        console.log("Reference from URL:", reference);
 
         if (!reference) {
+          console.log("No reference found in searchParams");
           setStatus("error");
           setMessage("No payment reference found");
           return;
         }
+
+        // Set flag to prevent re-runs
+        setHasRun(true);
 
         const authToken = Cookies.get("auth_token");
         if (!authToken) {
@@ -88,9 +106,8 @@ function PaymentVerificationContent() {
     };
 
     verifyPayment();
-  }, [searchParams, router]);
+  }, [searchParams, router, hasRun]);
 
-  // ... your JSX return (same as before)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
@@ -187,7 +204,7 @@ function PaymentVerificationFallback() {
   );
 }
 
-// Main component with Suspense wrapper - THIS IS THE KEY PART
+// Main component with Suspense wrapper
 export default function PaymentVerification() {
   return (
     <Suspense fallback={<PaymentVerificationFallback />}>

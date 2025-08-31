@@ -146,7 +146,7 @@ function PaymentVerificationContent() {
         <div className="space-y-3">
           {status === "success" && (
             <button
-              onClick={() => router.push("/my-bookings")}
+              onClick={() => router.push("/booking/my-bookings")}
               className="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700"
             >
               View My Bookings

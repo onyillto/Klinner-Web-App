@@ -61,7 +61,7 @@ function PaymentVerification({
       }
 
       const response = await fetch(
-        "http://localhost:3002/api/v1/house-cleaning/verify-payment",
+        "https://klinner.onrender.com/api/v1/house-cleaning/verify-payment",
         {
           method: "POST",
           headers: {

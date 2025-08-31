@@ -1,8 +1,8 @@
 // File: /Users/mac/Documents/GitHub/Klinner-Web-App/app/(Landing)/booking/bookings/page.tsx
-import * as entry from '../../../../../../app/(Landing)/booking/bookings/page.js'
+import * as entry from '../../../../../../app/(Landing)/booking/my-bookings/page.jsx'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../../../app/(Landing)/booking/bookings/page.js')
+type TEntry = typeof import('../../../../../../app/(Landing)/booking/my-bookings/page.jsx')
 
 type SegmentParams<T extends Object = any> = T extends Record<string, any>
   ? { [K in keyof T]: T[K] extends string ? string | string[] | undefined : never }

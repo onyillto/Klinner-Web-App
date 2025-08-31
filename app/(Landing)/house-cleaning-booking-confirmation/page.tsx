@@ -90,7 +90,19 @@ export default function PaymentVerification() {
       } catch (error) {
         console.error("Verification error:", error);
         setStatus("error");
-        setMessage("Failed to verify payment. Please contact support.");
+
+        // Show specific error messages
+        if (error.message.includes("CORS")) {
+          setMessage("CORS error - backend configuration issue");
+        } else if (error.message.includes("fetch")) {
+          setMessage("Network error - check your connection");
+        } else if (error.message.includes("HTTP 401")) {
+          setMessage("Authentication failed - please log in again");
+        } else if (error.message.includes("HTTP 404")) {
+          setMessage("API endpoint not found");
+        } else {
+          setMessage(`Error: ${error.message}`);
+        }
       }
     };
 

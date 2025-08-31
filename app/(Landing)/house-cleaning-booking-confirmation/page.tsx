@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 
-export default function PaymentVerification() {
+// Separate component that uses searchParams
+function PaymentVerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState("verifying"); // verifying, success, failed, error
+  const [status, setStatus] = useState("verifying");
   const [message, setMessage] = useState("Verifying your payment...");
   const [bookingData, setBookingData] = useState(null);
 
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        // Get reference from URL
         const reference = searchParams.get("reference");
 
         if (!reference) {
@@ -23,7 +23,6 @@ export default function PaymentVerification() {
           return;
         }
 
-        // Get auth token
         const authToken = Cookies.get("auth_token");
         if (!authToken) {
           setStatus("error");
@@ -33,7 +32,6 @@ export default function PaymentVerification() {
 
         console.log("Verifying payment:", reference);
 
-        // Make API call
         const response = await fetch(
           "https://klinner.onrender.com/api/v1/house-cleaning/verify-payment",
           {
@@ -58,11 +56,9 @@ export default function PaymentVerification() {
         console.log("API Response:", data);
 
         if (data.success) {
-          // Payment verified successfully
           setStatus("success");
           setMessage("Payment verified successfully!");
 
-          // Update localStorage with payment info
           const existingBooking = JSON.parse(
             localStorage.getItem("bookingData") || "{}"
           );
@@ -71,56 +67,33 @@ export default function PaymentVerification() {
             paymentStatus: "paid",
             paymentReference: reference,
             verifiedAt: new Date().toISOString(),
-            // Add any data from API response
             ...data.data,
           };
 
           localStorage.setItem("bookingData", JSON.stringify(updatedBooking));
           setBookingData(updatedBooking);
 
-          // Redirect to success page after 2 seconds
           setTimeout(() => {
-            router.push("/booking-success");
+            router.push("/house-cleaning-booking-confirmation");
           }, 2000);
         } else {
-          // Payment verification failed
           setStatus("failed");
           setMessage(data.message || "Payment verification failed");
         }
       } catch (error) {
         console.error("Verification error:", error);
         setStatus("error");
-
-        // Show specific error messages
-        if (error.message.includes("CORS")) {
-          setMessage("CORS error - backend configuration issue");
-        } else if (error.message.includes("fetch")) {
-          setMessage("Network error - check your connection");
-        } else if (error.message.includes("HTTP 401")) {
-          setMessage("Authentication failed - please log in again");
-        } else if (error.message.includes("HTTP 404")) {
-          setMessage("API endpoint not found");
-        } else {
-          setMessage(`Error: ${error.message}`);
-        }
+        setMessage(`Error: ${error.message}`);
       }
     };
 
     verifyPayment();
   }, [searchParams, router]);
 
-  const handleRetry = () => {
-    router.push("/house-cleaning-booking-summary");
-  };
-
-  const handleHome = () => {
-    router.push("/");
-  };
-
+  // ... your JSX return (same as before)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-        {/* Status Icon */}
         {status === "verifying" && (
           <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         )}
@@ -161,7 +134,6 @@ export default function PaymentVerification() {
           </div>
         )}
 
-        {/* Status Message */}
         <h2 className="text-xl font-bold mb-2">
           {status === "verifying" && "Verifying Payment"}
           {status === "success" && "Payment Successful!"}
@@ -171,7 +143,6 @@ export default function PaymentVerification() {
 
         <p className="text-gray-600 mb-6">{message}</p>
 
-        {/* Action Buttons */}
         <div className="space-y-3">
           {status === "success" && (
             <button
@@ -184,7 +155,7 @@ export default function PaymentVerification() {
 
           {(status === "failed" || status === "error") && (
             <button
-              onClick={handleRetry}
+              onClick={() => router.push("/house-cleaning-booking-summary")}
               className="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700"
             >
               Try Again
@@ -192,26 +163,35 @@ export default function PaymentVerification() {
           )}
 
           <button
-            onClick={handleHome}
+            onClick={() => router.push("/")}
             className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-50"
           >
             Return to Home
           </button>
         </div>
-
-        {/* Debug Info (remove in production) */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-left">
-            <strong>Debug Info:</strong>
-            <br />
-            Status: {status}
-            <br />
-            Reference: {searchParams.get("reference")}
-            <br />
-            Token exists: {!!Cookies.get("auth_token")}
-          </div>
-        )}
       </div>
     </div>
+  );
+}
+
+// Loading fallback
+function PaymentVerificationFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
+        <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <h2 className="text-xl font-bold mb-2">Loading...</h2>
+        <p className="text-gray-600">Preparing payment verification...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense wrapper - THIS IS THE KEY PART
+export default function PaymentVerification() {
+  return (
+    <Suspense fallback={<PaymentVerificationFallback />}>
+      <PaymentVerificationContent />
+    </Suspense>
   );
 }

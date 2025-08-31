@@ -1,0 +1,7 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "4294967294",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(Landing)/layout,_N_T_/(Landing)/booking/layout,_N_T_/(Landing)/booking/customer-chat/layout,_N_T_/(Landing)/booking/customer-chat/page,_N_T_/booking/customer-chat"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "4294967294",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(Landing)/layout,_N_T_/(Landing)/booking/layout,_N_T_/(Landing)/booking/moving/layout,_N_T_/(Landing)/booking/moving/page,_N_T_/booking/moving"
+  }
+}

@@ -2,8 +2,7 @@
 import axios from "axios";
 import { TokenService, isAuthenticated, getCurrentUser } from "./tokenService";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://klinner.onrender.com";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
 
 // Create a custom axios instance
 const httpClient = axios.create({

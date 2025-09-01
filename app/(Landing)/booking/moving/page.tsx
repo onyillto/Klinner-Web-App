@@ -1,4 +1,3 @@
-// pages/move-out.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,6 +20,8 @@ export default function MoveOutPage() {
   });
   const [propertySize, setPropertySize] = useState("");
   const [additionalServices, setAdditionalServices] = useState([]);
+  const [preferredTime, setPreferredTime] = useState(""); // Added for time slot selection
+  const [specialInstructions, setSpecialInstructions] = useState(""); // Added for special instructions
   const [totalRooms, setTotalRooms] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -140,6 +141,16 @@ export default function MoveOutPage() {
     { id: "handyman", name: "Minor Repairs", price: 10000, icon: "🔨" },
   ];
 
+  // Time slots for preferred time selection (aligned with house-cleaning.js and LaundryPage.js)
+  const timeSlots = [
+    "8:00 AM - 10:00 AM",
+    "10:00 AM - 12:00 PM",
+    "12:00 PM - 2:00 PM",
+    "2:00 PM - 4:00 PM",
+    "4:00 PM - 6:00 PM",
+    "6:00 PM - 8:00 PM",
+  ];
+
   // Calculate total rooms whenever rooms state changes
   useEffect(() => {
     const total = Object.values(rooms).reduce((sum, count) => sum + count, 0);
@@ -177,6 +188,8 @@ export default function MoveOutPage() {
     });
     setPropertySize("");
     setAdditionalServices([]);
+    setPreferredTime(""); // Reset preferred time
+    setSpecialInstructions(""); // Reset special instructions
   };
 
   const handleIncrement = (room) => {
@@ -226,7 +239,7 @@ export default function MoveOutPage() {
   };
 
   const handleContinue = () => {
-    if (totalRooms > 0 && propertySize) {
+    if (totalRooms > 0 && propertySize && preferredTime) {
       const moveOutData = {
         category: selectedCategory,
         rooms: rooms,
@@ -234,7 +247,27 @@ export default function MoveOutPage() {
         additionalServices: additionalServices,
         estimatedPrice: calculatePrice(),
         duration: categories[selectedCategory].duration,
+        preferredTime: preferredTime, // Added for booking-summary.js
+        specialInstructions: specialInstructions, // Added for booking-summary.js
+        turnaround: categories[selectedCategory].duration, // Alias for duration
+        serviceDisplay: {
+          // Added for consistency with LaundryPage.js
+          categoryName: selectedCategory,
+          roomCount: totalRooms,
+          propertySizeName:
+            propertySizes.find((s) => s.id === propertySize)?.name || "",
+          additionalServices: additionalServices.map(
+            (id) => additionalServiceOptions.find((s) => s.id === id)?.name
+          ),
+          estimatedPrice: calculatePrice(),
+          duration: categories[selectedCategory].duration,
+        },
       };
+
+      // Clear other service data to prevent conflicts
+      localStorage.removeItem("cleaningItems");
+      localStorage.removeItem("laundryOption");
+      localStorage.removeItem("repairRequest");
       localStorage.setItem("moveOutRooms", JSON.stringify(moveOutData));
       router.push("/booking-summary");
     }
@@ -347,7 +380,7 @@ export default function MoveOutPage() {
     }
   };
 
-  const isReadyToContinue = totalRooms > 0 && propertySize;
+  const isReadyToContinue = totalRooms > 0 && propertySize && preferredTime; // Updated to include preferredTime
 
   return (
     <>
@@ -850,6 +883,49 @@ export default function MoveOutPage() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Preferred time and special instructions */}
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Service Details
+                    </h3>
+
+                    {/* Preferred time */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Preferred service time
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {timeSlots.map((time) => (
+                          <button
+                            key={time}
+                            onClick={() => setPreferredTime(time)}
+                            className={`p-3 text-sm rounded-lg border-2 transition-all duration-200 ${
+                              preferredTime === time
+                                ? "border-blue-500 bg-blue-50 text-blue-700"
+                                : "border-gray-200 hover:border-blue-300"
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Special instructions */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Special instructions (optional)
+                      </label>
+                      <textarea
+                        value={specialInstructions}
+                        onChange={(e) => setSpecialInstructions(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={3}
+                        placeholder="Any special requests or areas that need extra attention..."
+                      />
                     </div>
                   </div>
 

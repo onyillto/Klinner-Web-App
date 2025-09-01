@@ -1,4 +1,3 @@
-// pages/gardening.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +11,7 @@ export default function GardeningPage() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [gardenSize, setGardenSize] = useState(null);
   const [frequency, setFrequency] = useState(null);
+  const [preferredTime, setPreferredTime] = useState("");
   const [isDesktop, setIsDesktop] = useState(false);
 
   // Gardening categories with descriptions and service inclusions
@@ -216,25 +216,38 @@ export default function GardeningPage() {
       title: "One-time Service",
       description: "Single visit",
       discount: 0,
+      turnaround: "1-2 days",
     },
     {
       id: "monthly",
       title: "Monthly",
       description: "Once a month",
       discount: 0.05,
+      turnaround: "Monthly",
     },
     {
       id: "biweekly",
       title: "Bi-weekly",
       description: "Every two weeks",
       discount: 0.1,
+      turnaround: "Bi-weekly",
     },
     {
       id: "weekly",
       title: "Weekly",
       description: "Every week",
       discount: 0.15,
+      turnaround: "Weekly",
     },
+  ];
+
+  const timeSlots = [
+    "8:00 AM - 10:00 AM",
+    "10:00 AM - 12:00 PM",
+    "12:00 PM - 2:00 PM",
+    "2:00 PM - 4:00 PM",
+    "4:00 PM - 6:00 PM",
+    "6:00 PM - 8:00 PM",
   ];
 
   // Detect if viewing on desktop
@@ -266,6 +279,7 @@ export default function GardeningPage() {
     setSelectedServices([]);
     setGardenSize(null);
     setFrequency(null);
+    setPreferredTime("");
   };
 
   const toggleService = (serviceId) => {
@@ -281,7 +295,7 @@ export default function GardeningPage() {
   const calculatePrice = () => {
     if (!selectedCategory || !gardenSize || !frequency) return 0;
 
-    const basePrice = categories[selectedCategory].basePrice;
+    const basePrice = categories[selectedCategory]?.basePrice || 5000;
     const sizeMultiplier =
       gardenSizes.find((size) => size.id === gardenSize)?.multiplier || 1;
     const frequencyDiscount =
@@ -294,21 +308,75 @@ export default function GardeningPage() {
   };
 
   const handleContinue = () => {
-    if (selectedServices.length > 0 && gardenSize && frequency) {
+    if (
+      selectedServices.length > 0 &&
+      gardenSize &&
+      frequency &&
+      preferredTime &&
+      typeof window !== "undefined"
+    ) {
+      const selectedFreq = serviceFrequencies.find(
+        (freq) => freq.id === frequency
+      );
       const gardeningData = {
-        category: selectedCategory,
+        category: selectedCategory || "Basic Maintenance",
         services: selectedServices,
-        gardenSize: gardenSize,
-        frequency: frequency,
+        gardenSize: gardenSize || "small",
+        frequency: frequency || "one-time",
+        preferredTime: preferredTime || "",
+        specialInstructions: "", // Added for consistency with repairs.js
         estimatedPrice: calculatePrice(),
+        turnaround: selectedFreq?.turnaround || "1-2 days",
+        serviceDisplay: {
+          categoryName: selectedCategory || "Basic Maintenance",
+          serviceNames: selectedServices.map(
+            (id) =>
+              gardenServices.find((s) => s.id === id)?.title ||
+              "Unknown Service"
+          ),
+          gardenSizeName:
+            gardenSizes.find((size) => size.id === gardenSize)?.title ||
+            "Small",
+          frequencyName: selectedFreq?.title || "One-time Service",
+          estimatedPrice: calculatePrice(),
+          turnaround: selectedFreq?.turnaround || "1-2 days",
+        },
       };
-      localStorage.setItem("gardeningServices", JSON.stringify(gardeningData));
+
+      // Log for debugging
+      console.log("Saving gardeningServices:", gardeningData);
+
+      // Clear other service data to prevent conflicts
+      localStorage.removeItem("cleaningItems");
+      localStorage.removeItem("laundryOption");
+      localStorage.removeItem("moveOutRooms");
+      localStorage.removeItem("repairRequest");
+
+      // Save gardeningServices
+      try {
+        localStorage.setItem(
+          "gardeningServices",
+          JSON.stringify(gardeningData)
+        );
+        console.log("gardeningServices saved successfully");
+      } catch (error) {
+        console.error("Error saving gardeningServices to localStorage:", error);
+      }
+
       router.push("/booking-summary");
+    } else {
+      console.warn("Cannot proceed: Missing required fields", {
+        selectedServices,
+        gardenSize,
+        frequency,
+        preferredTime,
+        isClient: typeof window !== "undefined",
+      });
     }
   };
 
   const isReadyToContinue =
-    selectedServices.length > 0 && gardenSize && frequency;
+    selectedServices.length > 0 && gardenSize && frequency && preferredTime;
 
   return (
     <>
@@ -456,6 +524,12 @@ export default function GardeningPage() {
                               : "border-gray-200"
                           }`}
                           onClick={() => handleCategorySelect(categoryName)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" &&
+                            handleCategorySelect(categoryName)
+                          }
                         >
                           <div className="flex items-start">
                             <div className="flex-shrink-0 mr-3">
@@ -529,7 +603,7 @@ export default function GardeningPage() {
                                   />
                                 </svg>
                                 <span className="text-sm text-gray-700">
-                                  {service?.title}
+                                  {service?.title || "Unknown Service"}
                                 </span>
                               </div>
                             );
@@ -603,6 +677,11 @@ export default function GardeningPage() {
                               : "border-gray-200 hover:border-green-300"
                           }`}
                           onClick={() => toggleService(service.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && toggleService(service.id)
+                          }
                         >
                           <div className="mr-4 mt-1">
                             <div
@@ -692,6 +771,11 @@ export default function GardeningPage() {
                               : "border-gray-200 hover:border-green-300"
                           }`}
                           onClick={() => setGardenSize(size.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && setGardenSize(size.id)
+                          }
                         >
                           <div className="flex items-center">
                             <div
@@ -758,6 +842,11 @@ export default function GardeningPage() {
                               : "border-gray-200 hover:border-green-300"
                           }`}
                           onClick={() => setFrequency(freq.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && setFrequency(freq.id)
+                          }
                         >
                           <div className="flex items-center">
                             <div
@@ -786,6 +875,52 @@ export default function GardeningPage() {
                               : "Standard Rate"}
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Preferred time */}
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <div className="flex items-center mb-6">
+                      <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-medium text-gray-900">
+                          Preferred Service Time
+                        </h2>
+                        <p className="text-sm text-gray-500">
+                          Select your preferred time slot
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {timeSlots.map((time) => (
+                        <button
+                          key={time}
+                          onClick={() => setPreferredTime(time)}
+                          className={`p-3 text-sm rounded-lg border-2 transition-all duration-200 ${
+                            preferredTime === time
+                              ? "border-green-500 bg-green-50 text-green-700"
+                              : "border-gray-200 hover:border-green-300"
+                          }`}
+                          aria-label={`Select time slot ${time}`}
+                        >
+                          {time}
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -830,7 +965,8 @@ export default function GardeningPage() {
                           Service Summary
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {selectedCategory} • {selectedServices.length}{" "}
+                          {selectedCategory || "No category selected"} •{" "}
+                          {selectedServices.length}{" "}
                           {selectedServices.length === 1
                             ? "service"
                             : "services"}{" "}

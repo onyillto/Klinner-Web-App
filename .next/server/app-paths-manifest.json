@@ -1,24 +1,10 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/(Landing)/booking/customer-chat/page": "app/(Landing)/booking/customer-chat/page.js",
   "/(Landing)/booking-summary/page": "app/(Landing)/booking-summary/page.js",
-  "/(Landing)/booking/gardning/page": "app/(Landing)/booking/gardning/page.js",
-  "/(Landing)/booking/house-cleaning/page": "app/(Landing)/booking/house-cleaning/page.js",
-  "/(Landing)/booking/laundry/page": "app/(Landing)/booking/laundry/page.js",
-  "/(Landing)/booking/user-chat/page": "app/(Landing)/booking/user-chat/page.js",
-  "/(Landing)/booking/moving/page": "app/(Landing)/booking/moving/page.js",
   "/(Landing)/booking/page": "app/(Landing)/booking/page.js",
-  "/(Landing)/house-cleaning-booking-confirmation/page": "app/(Landing)/house-cleaning-booking-confirmation/page.js",
   "/(Landing)/booking/repairs/page": "app/(Landing)/booking/repairs/page.js",
-  "/(Landing)/complete-profile/page": "app/(Landing)/complete-profile/page.js",
-  "/(Landing)/booking/bookings/page": "app/(Landing)/booking/bookings/page.js",
-  "/(Landing)/profile/page": "app/(Landing)/profile/page.js",
   "/page": "app/page.js",
-  "/(auth)/auth/change-password/page": "app/(auth)/auth/change-password/page.js",
-  "/(auth)/auth/signup/page": "app/(auth)/auth/signup/page.js",
-  "/(auth)/auth/signin/page": "app/(auth)/auth/signin/page.js",
-  "/(auth)/auth/verify-otp/page": "app/(auth)/auth/verify-otp/page.js",
-  "/(auth)/auth/forget-password/page": "app/(auth)/auth/forget-password/page.js",
-  "/(auth)/auth/verify-pin/page": "app/(auth)/auth/verify-pin/page.js"
+  "/(Landing)/booking/my-bookings/page": "app/(Landing)/booking/my-bookings/page.js",
+  "/(Landing)/booking/gardning/page": "app/(Landing)/booking/gardning/page.js"
 }

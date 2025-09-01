@@ -1,4 +1,3 @@
-// pages/repairs.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,6 +9,7 @@ export default function RepairsPage() {
   const [repairType, setRepairType] = useState(null);
   const [urgency, setUrgency] = useState(null);
   const [description, setDescription] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
   const [isDesktop, setIsDesktop] = useState(false);
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
 
@@ -161,27 +161,40 @@ export default function RepairsPage() {
       id: "standard",
       title: "Standard",
       description: "Within 2-3 days",
-      price: "Standard Rate",
+      price: 5000,
+      displayPrice: "Standard Rate",
+      turnaround: "2-3 days",
     },
     {
       id: "priority",
       title: "Priority",
       description: "Within 24 hours",
-      price: "+₦2,000",
+      price: 7000,
+      displayPrice: "+₦2,000",
+      turnaround: "24 hours",
     },
     {
       id: "emergency",
       title: "Emergency",
       description: "Within 3-6 hours",
-      price: "+₦5,000",
+      price: 10000,
+      displayPrice: "+₦5,000",
+      turnaround: "3-6 hours",
     },
   ];
 
+  const timeSlots = [
+    "8:00 AM - 10:00 AM",
+    "10:00 AM - 12:00 PM",
+    "12:00 PM - 2:00 PM",
+    "2:00 PM - 4:00 PM",
+    "4:00 PM - 6:00 PM",
+    "6:00 PM - 8:00 PM",
+  ];
+
   const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files as File[]);
+    const files = Array.from(e.target.files);
     if (files.length > 0) {
-      // In a real app, you would upload these to a server
-      // For now, we'll just create local URLs
       const newPhotos = files.map((file) => ({
         id: Math.random().toString(36).substring(2, 11),
         name: file.name,
@@ -198,26 +211,50 @@ export default function RepairsPage() {
   };
 
   const handleContinue = () => {
-    if (repairType && urgency) {
-      // Save the selected options to localStorage
-      localStorage.setItem(
-        "repairRequest",
-        JSON.stringify({
-          repairType,
-          urgency,
-          description,
-          photosCount: uploadedPhotos.length,
-        })
+    if (
+      repairType &&
+      urgency &&
+      preferredTime &&
+      typeof window !== "undefined"
+    ) {
+      const selectedUrgency = urgencyLevels.find(
+        (level) => level.id === urgency
       );
+      const repairData = {
+        repairType,
+        urgency,
+        description: description.slice(0, 500), // Limit description length
+        preferredTime,
+        estimatedPrice: selectedUrgency?.price || 5000,
+        turnaround: selectedUrgency?.turnaround || "2-3 days",
+        photosCount: uploadedPhotos.length,
+        serviceDisplay: {
+          repairTypeName:
+            repairTypes.find((type) => type.id === repairType)?.title ||
+            "General Handyman",
+          urgencyName: selectedUrgency?.title || "Standard",
+          description: description.slice(0, 500),
+          photosCount: uploadedPhotos.length,
+          photoNames: uploadedPhotos.map((photo) => photo.name),
+          estimatedPrice: selectedUrgency?.price || 5000,
+          turnaround: selectedUrgency?.turnaround || "2-3 days",
+        },
+      };
 
-      // Navigate to the next step
+      // Clear other service data to prevent conflicts
+      localStorage.removeItem("cleaningItems");
+      localStorage.removeItem("laundryOption");
+      localStorage.removeItem("moveOutRooms");
+      localStorage.setItem("repairRequest", JSON.stringify(repairData));
+
       router.push("/booking-summary");
     }
   };
 
-  const isReadyToContinue = repairType && urgency;
+  const isReadyToContinue = repairType && urgency && preferredTime;
 
   const formatFileSize = (bytes) => {
+    if (typeof bytes !== "number") return "0 B";
     if (bytes < 1024) return bytes + " B";
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else return (bytes / 1048576).toFixed(1) + " MB";
@@ -417,9 +454,54 @@ export default function RepairsPage() {
                     </div>
                   </div>
                   <div className="text-base font-medium text-blue-600">
-                    {level.price}
+                    {level.displayPrice}
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Preferred time */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div className="flex items-center mb-6">
+              <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">
+                  Preferred Service Time
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Select your preferred time slot
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {timeSlots.map((time) => (
+                <button
+                  key={time}
+                  onClick={() => setPreferredTime(time)}
+                  className={`p-3 text-sm rounded-lg border-2 transition-all duration-200 ${
+                    preferredTime === time
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-gray-200 hover:border-blue-300"
+                  }`}
+                >
+                  {time}
+                </button>
               ))}
             </div>
           </div>
@@ -504,7 +586,7 @@ export default function RepairsPage() {
                       ? "Click to add more photos"
                       : "Click to upload photos"}
                   </p>
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="text-xs text-gray-500">
                     PNG, JPG, GIF up to 10MB
                   </p>
                 </label>

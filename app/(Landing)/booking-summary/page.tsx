@@ -1,4 +1,4 @@
-// pages/house-cleaning-booking-summary.js - House cleaning specific booking summary
+// pages/booking-summary.js - Universal booking summary for all services
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,10 +6,11 @@ import Head from "next/head";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
-export default function HouseCleaningBookingSummaryPage() {
+export default function UniversalBookingSummaryPage() {
   const router = useRouter();
 
-  const [cleaningData, setCleaningData] = useState(null);
+  const [serviceData, setServiceData] = useState(null);
+  const [serviceType, setServiceType] = useState("");
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
@@ -43,46 +44,56 @@ export default function HouseCleaningBookingSummaryPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Load house cleaning data from localStorage
+  // Load service data from localStorage
   useEffect(() => {
-    console.log("Loading house cleaning data from localStorage...");
+    console.log("Loading service data from localStorage...");
 
-    const cleaningItems = localStorage.getItem("cleaningItems");
-    if (cleaningItems) {
-      try {
-        const parsed = JSON.parse(cleaningItems);
-        setCleaningData(parsed);
-        console.log("Loaded cleaning data:", parsed);
+    // Check for different service types in localStorage
+    const serviceKeys = [
+      { key: "cleaningItems", type: "house_cleaning", name: "House Cleaning" },
+      { key: "laundryOption", type: "laundry", name: "Laundry Service" },
+      { key: "moveOutRooms", type: "move_out", name: "Moving Service" },
+      { key: "repairRequest", type: "repairs", name: "Repair Service" },
+    ];
 
-        // Pre-fill preferred time if it exists in the cleaning data
-        if (parsed.preferredTime) {
-          setSelectedTime(parsed.preferredTime);
+    let foundService = null;
+    for (const service of serviceKeys) {
+      const data = localStorage.getItem(service.key);
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          setServiceData(parsed);
+          setServiceType(service.type);
+          console.log(`Loaded ${service.name} data:`, parsed);
+
+          // Pre-fill preferred time if it exists
+          if (parsed.preferredTime || parsed.pickupTime) {
+            setSelectedTime(parsed.preferredTime || parsed.pickupTime);
+          }
+
+          foundService = service;
+          break;
+        } catch (e) {
+          console.error(`Error parsing ${service.name} data:`, e);
         }
-      } catch (e) {
-        console.error("Error parsing cleaning data:", e);
-        setError(
-          "Failed to load your cleaning service selection. Please go back and select your service again."
-        );
       }
-    } else {
-      setError("No cleaning service selected. Please select a service first.");
+    }
+
+    if (!foundService) {
+      setError("No service selected. Please select a service first.");
     }
   }, []);
 
   // Get user ID from auth token or cookies
   const getUserId = () => {
-    // Try to get user ID from cookies or decode from auth token
     const userId = Cookies.get("user_id");
     if (userId) {
       return userId;
     }
 
-    // If no user_id cookie, you might need to decode from auth token
-    // This depends on your auth implementation
     const authToken = Cookies.get("auth_token");
     if (authToken) {
       try {
-        // Decode JWT token to get user ID (basic example)
         const payload = JSON.parse(atob(authToken.split(".")[1]));
         return payload.userId || payload.id || payload.sub;
       } catch (e) {
@@ -98,14 +109,15 @@ export default function HouseCleaningBookingSummaryPage() {
     setIsLoading(true);
     setError("");
 
-    console.log("Starting house cleaning booking submission...");
-    console.log("Cleaning Data:", cleaningData);
+    console.log("Starting universal service booking submission...");
+    console.log("Service Type:", serviceType);
+    console.log("Service Data:", serviceData);
     console.log("Customer Info:", customerInfo);
     console.log("Date/Time:", selectedDate, selectedTime);
 
     try {
-      if (!cleaningData) {
-        throw new Error("No cleaning service selected");
+      if (!serviceData || !serviceType) {
+        throw new Error("No service selected");
       }
 
       // Get user ID
@@ -114,31 +126,28 @@ export default function HouseCleaningBookingSummaryPage() {
         throw new Error("User ID not found. Please log in again.");
       }
 
-      // Prepare the API payload to match your backend exactly
+      // Prepare the universal API payload
       const payload = {
         user_id: userId,
-        cleaningData: {
-          category: cleaningData.category || "Standard Cleaning",
-          package: cleaningData.package || "Standard Package",
-          items: cleaningData.items || {},
-          homeSize: cleaningData.homeSize || "small",
-          frequency: cleaningData.frequency || "one-time",
-          estimatedPrice: cleaningData.estimatedPrice || 0,
-          estimatedTime: cleaningData.estimatedTime || "3-4 hours",
-          preferredTime: selectedTime,
-          specialInstructions:
-            customerInfo.specialInstructions ||
-            cleaningData.specialInstructions ||
-            "",
-          turnaround: cleaningData.turnaround || "2-4 hours",
-        },
+        serviceType: serviceType,
+        serviceData: transformServiceData(
+          serviceType,
+          serviceData,
+          selectedTime
+        ),
         bookingDetails: {
           bookingDate: selectedDate,
           bookingTime: selectedTime.split(" - ")[0], // Extract start time only
           location: customerInfo.address,
         },
         customerInfo: {
+          name: customerInfo.name,
+          email: customerInfo.email,
           phone: customerInfo.phone,
+          specialInstructions:
+            customerInfo.specialInstructions ||
+            serviceData.specialInstructions ||
+            "",
         },
       };
 
@@ -146,16 +155,14 @@ export default function HouseCleaningBookingSummaryPage() {
 
       // Get auth token
       const authToken = Cookies.get("auth_token");
-      console.log("Auth token exists:", !!authToken);
-
       if (!authToken) {
         throw new Error("Authentication required. Please log in.");
       }
 
-      // Call the backend API
+      // Call the universal backend API
       console.log("Making API request...");
       const response = await fetch(
-        "https://klinner.onrender.com/api/v1/house-cleaning/create",
+        "http://localhost:3002/api/v1/services/create",
         {
           method: "POST",
           headers: {
@@ -196,29 +203,26 @@ export default function HouseCleaningBookingSummaryPage() {
 
         // Save the complete booking data for confirmation page
         const bookingForStorage = {
-          id: result.data.cleaningService._id,
-          serviceId: result.data.cleaningService._id,
-          serviceName: result.data.cleaningService.serviceName,
-          serviceCategory: result.data.cleaningService.serviceCategory,
-          serviceRate: result.data.cleaningService.serviceRate,
-          bookingDate: result.data.cleaningService.booking.bookingDate,
-          bookingTime: result.data.cleaningService.booking.bookingTime,
-          location: result.data.cleaningService.booking.location,
-          paymentStatus: result.data.cleaningService.booking.paymentStatus,
+          id: result.data.service._id,
+          serviceId: result.data.service._id,
+          serviceName: result.data.service.serviceName,
+          serviceCategory: result.data.service.serviceCategory,
+          serviceType: result.data.service.serviceType,
+          serviceRate: result.data.service.serviceRate,
+          bookingDate: result.data.service.booking.bookingDate,
+          bookingTime: result.data.service.booking.bookingTime,
+          location: result.data.service.booking.location,
+          paymentStatus: result.data.service.booking.paymentStatus,
           paymentReference: result.data.payment?.reference,
           authorizationUrl: result.data.payment?.authorization_url,
           accessCode: result.data.payment?.access_code,
           customerInfo: customerInfo,
-          cleaningData: cleaningData,
+          serviceData: serviceData,
           selectedDate: selectedDate,
           selectedTime: selectedTime,
-          totalPrice: cleaningData.estimatedPrice,
+          totalPrice: serviceData.estimatedPrice,
           createdAt: new Date().toISOString(),
-          serviceType: "cleaning",
-          areas: result.data.cleaningService.areas,
-          roomSizes: result.data.cleaningService.roomSizes,
-          estimatedDuration: result.data.cleaningService.estimatedDuration,
-          pricingBreakdown: result.data.pricing,
+          pricingBreakdown: result.data.service.pricingBreakdown,
         };
 
         console.log("Saving booking data to localStorage...");
@@ -235,7 +239,7 @@ export default function HouseCleaningBookingSummaryPage() {
           }, 500);
         } else {
           console.log("No payment URL, redirecting to confirmation page");
-          router.push("/house-cleaning-booking-confirmation");
+          router.push("/booking-confirmation");
         }
       } else {
         console.error("Unexpected response format:", result);
@@ -257,6 +261,60 @@ export default function HouseCleaningBookingSummaryPage() {
     }
   };
 
+  // Transform service data based on service type
+  const transformServiceData = (type, data, selectedTime) => {
+    const baseData = { ...data, preferredTime: selectedTime };
+
+    switch (type) {
+      case "house_cleaning":
+        return {
+          category: data.category || "Standard Cleaning",
+          package: data.package || "Standard Package",
+          items: data.items || {},
+          homeSize: data.homeSize || "small",
+          frequency: data.frequency || "one-time",
+          estimatedPrice: data.estimatedPrice || 0,
+          estimatedTime: data.estimatedTime || "3-4 hours",
+          preferredTime: selectedTime,
+          specialInstructions: data.specialInstructions || "",
+          turnaround: data.turnaround || "2-4 hours",
+        };
+
+      case "laundry":
+        return {
+          category: data.category || "Standard Service",
+          service: data.service || "washed-folded",
+          itemCount: data.itemCount || 5,
+          pickupTime: selectedTime,
+          specialInstructions: data.specialInstructions || "",
+          turnaround: data.turnaround || "24-48 hours",
+          estimatedPrice: data.estimatedPrice || 0,
+        };
+
+      case "move_out":
+        return {
+          category: data.category || "Move-out Cleaning",
+          rooms: data.rooms || {},
+          propertySize: data.propertySize || "small",
+          additionalServices: data.additionalServices || [],
+          duration: data.duration || "4-8 hours",
+          estimatedPrice: data.estimatedPrice || 0,
+        };
+
+      case "repairs":
+        return {
+          repairType: data.repairType || "general",
+          urgency: data.urgency || "standard",
+          description: data.description || "",
+          photosCount: data.photosCount || 0,
+          estimatedPrice: data.estimatedPrice || 0,
+        };
+
+      default:
+        return baseData;
+    }
+  };
+
   const isFormValid = () => {
     return (
       customerInfo.name &&
@@ -265,7 +323,7 @@ export default function HouseCleaningBookingSummaryPage() {
       customerInfo.address &&
       selectedDate &&
       selectedTime &&
-      cleaningData
+      serviceData
     );
   };
 
@@ -290,22 +348,74 @@ export default function HouseCleaningBookingSummaryPage() {
     return dates;
   };
 
-  // Calculate room count for display
-  const getRoomCount = () => {
-    if (!cleaningData?.items) return 0;
-    return Object.values(cleaningData.items).reduce<number>(
-      (sum, count) => sum + (typeof count === "number" ? count : 0),
-      0
-    );
+  // Get service name based on type
+  const getServiceName = () => {
+    const serviceNames = {
+      house_cleaning: "House Cleaning",
+      laundry: "Laundry Service",
+      move_out: "Moving Service",
+      repairs: "Repair Service",
+    };
+    return serviceNames[serviceType] || "Service";
   };
+
+  // Get service display details based on type
+  const getServiceDetails = () => {
+    switch (serviceType) {
+      case "house_cleaning":
+        const roomCount = serviceData?.items
+          ? Object.values(serviceData.items).reduce(
+              (sum, count) => sum + count,
+              0
+            )
+          : 0;
+        return {
+          category: serviceData?.category,
+          details: `${serviceData?.package} • ${roomCount} rooms • ${serviceData?.homeSize} home`,
+          duration: serviceData?.estimatedTime,
+        };
+
+      case "laundry":
+        return {
+          category: serviceData?.category,
+          details: `${serviceData?.service} • ${serviceData?.itemCount} items`,
+          duration: serviceData?.turnaround,
+        };
+
+      case "move_out":
+        const totalRooms = serviceData?.rooms
+          ? Object.values(serviceData.rooms).reduce(
+              (sum, count) => sum + count,
+              0
+            )
+          : 0;
+        return {
+          category: serviceData?.category,
+          details: `${totalRooms} rooms • ${serviceData?.propertySize} property`,
+          duration: serviceData?.duration,
+        };
+
+      case "repairs":
+        return {
+          category: serviceData?.repairType,
+          details: `${serviceData?.urgency} priority`,
+          duration: "As needed",
+        };
+
+      default:
+        return { category: "Unknown", details: "", duration: "" };
+    }
+  };
+
+  const serviceDetails = getServiceDetails();
 
   return (
     <>
       <Head>
-        <title>House Cleaning Booking Summary | Home Services</title>
+        <title>{getServiceName()} Booking Summary | Home Services</title>
         <meta
           name="description"
-          content="Review and confirm your house cleaning booking"
+          content={`Review and confirm your ${getServiceName().toLowerCase()} booking`}
         />
       </Head>
 
@@ -334,10 +444,10 @@ export default function HouseCleaningBookingSummaryPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              House Cleaning Booking
+              {getServiceName()} Booking
             </h1>
             <p className="text-sm text-gray-500 hidden md:block">
-              Review and confirm your cleaning service
+              Review and confirm your service booking
             </p>
           </div>
         </div>
@@ -372,7 +482,7 @@ export default function HouseCleaningBookingSummaryPage() {
             </div>
           )}
 
-          {!cleaningData ? (
+          {!serviceData ? (
             // No service selected
             <div className="bg-white rounded-xl shadow-sm p-8 text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -386,22 +496,21 @@ export default function HouseCleaningBookingSummaryPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                No Cleaning Service Selected
+                No Service Selected
               </h2>
               <p className="text-gray-600 mb-6">
-                Please select your house cleaning service to continue with
-                booking.
+                Please select a service to continue with booking.
               </p>
               <button
-                onClick={() => router.push("/house-cleaning")}
+                onClick={() => router.push("/")}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
-                Select Cleaning Service
+                Select Service
               </button>
             </div>
           ) : (
@@ -427,28 +536,20 @@ export default function HouseCleaningBookingSummaryPage() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={1.5}
-                              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                             />
                           </svg>
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900">
-                            House Cleaning
+                            {getServiceName()}
                           </h3>
                           <p className="text-sm text-purple-700 font-medium">
-                            {cleaningData.category}
+                            {serviceDetails.category}
                           </p>
                           <p className="text-sm text-gray-600 mt-1">
-                            {cleaningData.package} • {getRoomCount()} rooms •{" "}
-                            {cleaningData.homeSize} home
+                            {serviceDetails.details}
                           </p>
-                          {cleaningData.frequency !== "one-time" && (
-                            <p className="text-sm text-green-600 font-medium">
-                              {cleaningData.frequency.charAt(0).toUpperCase() +
-                                cleaningData.frequency.slice(1)}{" "}
-                              service
-                            </p>
-                          )}
                           <div className="flex items-center mt-2 text-xs text-gray-500">
                             <svg
                               className="h-4 w-4 mr-1"
@@ -463,13 +564,13 @@ export default function HouseCleaningBookingSummaryPage() {
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                               />
                             </svg>
-                            Duration: {cleaningData.estimatedTime}
+                            Duration: {serviceDetails.duration}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-gray-900">
-                          ₦{(cleaningData.estimatedPrice || 0).toLocaleString()}
+                          ₦{(serviceData.estimatedPrice || 0).toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -557,7 +658,7 @@ export default function HouseCleaningBookingSummaryPage() {
                         }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         rows={3}
-                        placeholder="Enter the full address where cleaning will be performed"
+                        placeholder="Enter the full address where service will be performed"
                       />
                     </div>
 
@@ -616,7 +717,7 @@ export default function HouseCleaningBookingSummaryPage() {
                         }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         rows={3}
-                        placeholder="Any special requests or instructions for our cleaning team..."
+                        placeholder="Any special requests or instructions..."
                       />
                     </div>
                   </form>
@@ -634,14 +735,14 @@ export default function HouseCleaningBookingSummaryPage() {
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          House Cleaning
+                          {getServiceName()}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {cleaningData.category}
+                          {serviceDetails.category}
                         </p>
                       </div>
                       <p className="text-sm font-semibold text-gray-900">
-                        ₦{(cleaningData.estimatedPrice || 0).toLocaleString()}
+                        ₦{(serviceData.estimatedPrice || 0).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -652,7 +753,7 @@ export default function HouseCleaningBookingSummaryPage() {
                         Total
                       </p>
                       <p className="text-xl font-bold text-purple-600">
-                        ₦{(cleaningData.estimatedPrice || 0).toLocaleString()}
+                        ₦{(serviceData.estimatedPrice || 0).toLocaleString()}
                       </p>
                     </div>
                   </div>

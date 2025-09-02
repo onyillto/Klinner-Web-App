@@ -37,7 +37,7 @@ export default function DesktopSidebar() {
 
       // Use the new API endpoint with limit for recent services
       const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+        process.env.NEXT_PUBLIC_API_URL || "https://klinner.onrender.com";
       const apiUrl = `${API_BASE_URL}/api/v1/services/my-services?limit=3&sortBy=createdAt&sortOrder=desc`;
 
       console.log("📡 Making API call to:", apiUrl);

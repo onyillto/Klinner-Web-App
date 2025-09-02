@@ -168,7 +168,7 @@ export default function UniversalBookingSummaryPage() {
       // Call the universal backend API
       console.log("Making API request...");
       const response = await fetch(
-        "http://localhost:3002/api/v1/services/create",
+        "https://klinner.onrender.com/api/v1/services/create",
         {
           method: "POST",
           headers: {

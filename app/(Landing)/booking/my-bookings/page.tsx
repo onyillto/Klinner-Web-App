@@ -42,7 +42,7 @@ export default function BookingsPage() {
 
       // Use the new API endpoint
       const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+        process.env.NEXT_PUBLIC_API_URL || "https://klinner.onrende";
       const apiUrl = `${API_BASE_URL}/api/v1/services/my-services`;
 
       console.log("📡 Making API call to:", apiUrl);

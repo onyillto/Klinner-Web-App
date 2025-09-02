@@ -216,7 +216,7 @@ export default function UserProfileForm() {
 
       const response = await axios.put(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002"
+          process.env.NEXT_PUBLIC_API_URL || "https://klinner.onrender.com"
         }/api/v1/user/update-profile-image`,
         imageFormData,
         {
@@ -310,7 +310,7 @@ export default function UserProfileForm() {
 
       const response = await axios.post(
         `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002"
+          process.env.NEXT_PUBLIC_API_URL || "https://klinner.onrender.com"
         }/api/v1/user/fill-data`,
         dataToSend,
         {

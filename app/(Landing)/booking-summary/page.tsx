@@ -47,24 +47,29 @@ export default function UniversalBookingSummaryPage() {
   // Load service data from localStorage
   useEffect(() => {
     console.log("Loading service data from localStorage...");
+    console.log("All localStorage keys:", Object.keys(localStorage));
 
-    // Check for different service types in localStorage
+    // Check for different service types in localStorage - INCLUDING GARDENING
     const serviceKeys = [
       { key: "cleaningItems", type: "house_cleaning", name: "House Cleaning" },
       { key: "laundryOption", type: "laundry", name: "Laundry Service" },
       { key: "moveOutRooms", type: "move_out", name: "Moving Service" },
       { key: "repairRequest", type: "repairs", name: "Repair Service" },
+      { key: "gardeningDetails", type: "gardening", name: "Gardening Service" }, // GARDENING SUPPORT
     ];
 
     let foundService = null;
     for (const service of serviceKeys) {
       const data = localStorage.getItem(service.key);
+      console.log(`Checking ${service.key}:`, data ? "FOUND" : "NOT FOUND");
+
       if (data) {
         try {
           const parsed = JSON.parse(data);
+          console.log(`Loaded ${service.name} data:`, parsed);
+
           setServiceData(parsed);
           setServiceType(service.type);
-          console.log(`Loaded ${service.name} data:`, parsed);
 
           // Pre-fill preferred time if it exists
           if (parsed.preferredTime || parsed.pickupTime) {
@@ -80,6 +85,7 @@ export default function UniversalBookingSummaryPage() {
     }
 
     if (!foundService) {
+      console.error("No service found in localStorage");
       setError("No service selected. Please select a service first.");
     }
   }, []);
@@ -310,6 +316,20 @@ export default function UniversalBookingSummaryPage() {
           estimatedPrice: data.estimatedPrice || 0,
         };
 
+      case "gardening": // GARDENING TRANSFORMATION
+        return {
+          category: data.category || "Basic Maintenance",
+          package: data.package || "Standard Package",
+          services: data.services || {}, // Services object like house cleaning items
+          gardenSize: data.gardenSize || "small",
+          frequency: data.frequency || "one-time",
+          estimatedPrice: data.estimatedPrice || 0,
+          estimatedTime: data.estimatedTime || "1-2 days",
+          preferredTime: selectedTime,
+          specialInstructions: data.specialInstructions || "",
+          turnaround: data.turnaround || "1-2 days",
+        };
+
       default:
         return baseData;
     }
@@ -355,6 +375,7 @@ export default function UniversalBookingSummaryPage() {
       laundry: "Laundry Service",
       move_out: "Moving Service",
       repairs: "Repair Service",
+      gardening: "Gardening Service", // GARDENING NAME MAPPING
     };
     return serviceNames[serviceType] || "Service";
   };
@@ -365,7 +386,7 @@ export default function UniversalBookingSummaryPage() {
       case "house_cleaning":
         const roomCount = serviceData?.items
           ? Object.values(serviceData.items).reduce(
-              (sum, count) => sum + count,
+              (sum: number, count: number) => sum + count,
               0
             )
           : 0;
@@ -385,7 +406,7 @@ export default function UniversalBookingSummaryPage() {
       case "move_out":
         const totalRooms = serviceData?.rooms
           ? Object.values(serviceData.rooms).reduce(
-              (sum, count) => sum + count,
+              (sum: number, count: number) => sum + count,
               0
             )
           : 0;
@@ -400,6 +421,21 @@ export default function UniversalBookingSummaryPage() {
           category: serviceData?.repairType,
           details: `${serviceData?.urgency} priority`,
           duration: "As needed",
+        };
+
+      case "gardening": // GARDENING DETAILS DISPLAY
+        const serviceCount = serviceData?.services
+          ? Object.values(serviceData.services).reduce(
+              (sum: number, count: number) => sum + count,
+              0
+            )
+          : 0;
+        const gardenSizeName = serviceData?.gardenSize || "small";
+        const packageName = serviceData?.package || "Standard Package";
+        return {
+          category: serviceData?.category,
+          details: `${packageName} • ${serviceCount} services • ${gardenSizeName} garden`,
+          duration: serviceData?.estimatedTime || "1-2 days",
         };
 
       default:

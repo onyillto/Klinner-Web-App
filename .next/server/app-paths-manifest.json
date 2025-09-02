@@ -1,10 +1,7 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/(Landing)/booking-summary/page": "app/(Landing)/booking-summary/page.js",
-  "/(Landing)/booking/page": "app/(Landing)/booking/page.js",
-  "/(Landing)/booking/repairs/page": "app/(Landing)/booking/repairs/page.js",
+  "/(Landing)/booking/user-chat/page": "app/(Landing)/booking/user-chat/page.js",
   "/page": "app/page.js",
   "/(Landing)/booking/my-bookings/page": "app/(Landing)/booking/my-bookings/page.js",
-  "/(Landing)/booking/gardning/page": "app/(Landing)/booking/gardning/page.js"
+  "/(Landing)/booking-summary/page": "app/(Landing)/booking-summary/page.js",
+  "/(Landing)/booking/laundry/page": "app/(Landing)/booking/laundry/page.js"
 }

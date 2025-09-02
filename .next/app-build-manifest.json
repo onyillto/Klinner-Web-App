@@ -11,45 +11,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/(auth)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/layout.js"
-    ],
-    "/(auth)/auth/signin/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/auth/signin/page.js"
-    ],
     "/(Landing)/booking/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(Landing)/booking/page.js"
-    ],
-    "/(Landing)/booking/house-cleaning/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(Landing)/booking/house-cleaning/page.js"
-    ],
-    "/(Landing)/booking-summary/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(Landing)/booking-summary/page.js"
     ],
     "/(Landing)/booking/laundry/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(Landing)/booking/laundry/page.js"
     ],
-    "/(Landing)/booking/moving/page": [
+    "/(Landing)/booking-summary/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(Landing)/booking/moving/page.js"
+      "static/chunks/app/(Landing)/booking-summary/page.js"
     ],
-    "/(Landing)/booking/repairs/page": [
+    "/(Landing)/booking/house-cleaning/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(Landing)/booking/repairs/page.js"
+      "static/chunks/app/(Landing)/booking/house-cleaning/page.js"
     ],
     "/(Landing)/booking/gardning/page": [
       "static/chunks/webpack.js",
@@ -61,10 +41,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(Landing)/booking/my-bookings/page.js"
     ],
-    "/_not-found/page": [
+    "/(Landing)/booking/user-chat/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/(Landing)/booking/user-chat/page.js"
     ]
   }
 }

@@ -7,237 +7,160 @@ import { useRouter } from "next/navigation";
 export default function GardeningPage() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [currentStep, setCurrentStep] = useState(1); // 1: category selection, 2: service customization
-  const [selectedServices, setSelectedServices] = useState([]);
-  const [gardenSize, setGardenSize] = useState(null);
-  const [frequency, setFrequency] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [services, setServices] = useState({
+    "Lawn Mowing": 0,
+    "Hedge Trimming": 0,
+    Weeding: 0,
+    Planting: 0,
+    Pruning: 0,
+    "Leaf Removal": 0,
+  });
+  const [gardenSize, setGardenSize] = useState("");
+  const [frequency, setFrequency] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
+  const [totalServices, setTotalServices] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  // Gardening categories with descriptions and service inclusions
+  // Gardening categories - simplified structure like house cleaning
   const categories = {
     "Basic Maintenance": {
       description: "Essential garden upkeep for regular maintenance",
-      services: ["lawn-mowing", "weeding", "leaf-removal"],
-      icon: "🌱",
+      turnaround: "1-2 days",
       basePrice: 5000,
+      pricePerService: 800,
+      icon: "🌱",
     },
     "Landscape Care": {
       description: "Comprehensive garden and landscape management",
-      services: ["lawn-mowing", "hedge-trimming", "pruning", "weeding"],
-      icon: "🌳",
+      turnaround: "2-3 days",
       basePrice: 8000,
+      pricePerService: 1200,
+      icon: "🌳",
     },
     "Seasonal Service": {
       description: "Seasonal cleanup and preparation services",
-      services: ["leaf-removal", "pruning", "planting", "weeding"],
-      icon: "🍂",
+      turnaround: "1-3 days",
       basePrice: 6500,
+      pricePerService: 1000,
+      icon: "🍂",
     },
     "Premium Garden Care": {
       description: "Complete garden transformation and maintenance",
-      services: [
-        "lawn-mowing",
-        "hedge-trimming",
-        "weeding",
-        "planting",
-        "pruning",
-        "leaf-removal",
-      ],
-      icon: "🌺",
+      turnaround: "3-5 days",
       basePrice: 12000,
+      pricePerService: 1500,
+      icon: "🌺",
     },
   };
 
-  const gardenServices = [
+  // Simplified packages like house cleaning
+  const gardeningPackages = [
     {
-      id: "lawn-mowing",
-      title: "Lawn Mowing",
-      description:
-        "Regular cutting of grass to maintain a healthy and neat appearance",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-          />
-        </svg>
-      ),
+      id: "basic",
+      title: "Basic Package",
+      description: "Essential gardening for budget-conscious customers",
+      features: [
+        "Basic lawn care",
+        "Simple weeding",
+        "Debris removal",
+        "Basic cleanup",
+      ],
+      multiplier: 0.8,
     },
     {
-      id: "hedge-trimming",
-      title: "Hedge Trimming",
-      description:
-        "Precise cutting of hedges and bushes to maintain shape and promote healthy growth",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-          />
-        </svg>
-      ),
+      id: "standard",
+      title: "Standard Package",
+      description: "Complete gardening with attention to detail",
+      features: [
+        "All basic services",
+        "Hedge shaping",
+        "Plant care",
+        "Garden bed maintenance",
+      ],
+      multiplier: 1,
     },
     {
-      id: "weeding",
-      title: "Weeding",
-      description:
-        "Removal of unwanted plants from garden beds, lawns, and paved areas",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
-        </svg>
-      ),
+      id: "premium",
+      title: "Premium Package",
+      description: "Comprehensive gardening with extra care",
+      features: [
+        "All standard services",
+        "Detailed pruning",
+        "Soil treatment",
+        "Seasonal planting",
+        "Garden design advice",
+      ],
+      multiplier: 1.4,
     },
     {
-      id: "planting",
-      title: "Planting",
-      description:
-        "Adding new plants, flowers, or trees to enhance your garden's beauty",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: "pruning",
-      title: "Pruning",
-      description:
-        "Selective removal of branches to improve plant health and appearance",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: "leaf-removal",
-      title: "Leaf Removal",
-      description: "Clearing fallen leaves to maintain a tidy garden and lawn",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-      ),
+      id: "luxury",
+      title: "Luxury Package",
+      description: "Professional landscaping with meticulous attention",
+      features: [
+        "All premium services",
+        "Custom landscaping",
+        "Premium plant selection",
+        "Ongoing maintenance plan",
+        "Quality inspection",
+      ],
+      multiplier: 1.8,
     },
   ];
 
   const gardenSizes = [
     {
       id: "small",
-      title: "Small",
+      name: "Small Garden",
+      multiplier: 0.7,
       description: "Up to 100 sq meters",
-      multiplier: 1,
     },
     {
       id: "medium",
-      title: "Medium",
+      name: "Medium Garden",
+      multiplier: 1,
       description: "100-250 sq meters",
-      multiplier: 1.5,
     },
     {
       id: "large",
-      title: "Large",
+      name: "Large Garden",
+      multiplier: 1.5,
       description: "250-500 sq meters",
-      multiplier: 2,
     },
     {
       id: "xlarge",
-      title: "X-Large",
+      name: "Very Large Garden",
+      multiplier: 2.2,
       description: "500+ sq meters",
-      multiplier: 2.8,
     },
   ];
 
-  const serviceFrequencies = [
+  const frequencies = [
     {
       id: "one-time",
-      title: "One-time Service",
-      description: "Single visit",
+      name: "One-time Service",
       discount: 0,
-      turnaround: "1-2 days",
+      description: "Single gardening session",
     },
     {
       id: "monthly",
-      title: "Monthly",
-      description: "Once a month",
+      name: "Monthly",
       discount: 0.05,
-      turnaround: "Monthly",
+      description: "Once per month",
     },
     {
-      id: "biweekly",
-      title: "Bi-weekly",
-      description: "Every two weeks",
+      id: "bi-weekly",
+      name: "Bi-weekly",
       discount: 0.1,
-      turnaround: "Bi-weekly",
+      description: "Every two weeks",
     },
     {
       id: "weekly",
-      title: "Weekly",
-      description: "Every week",
+      name: "Weekly",
       discount: 0.15,
-      turnaround: "Weekly",
+      description: "Every week",
     },
   ];
 
@@ -250,6 +173,15 @@ export default function GardeningPage() {
     "6:00 PM - 8:00 PM",
   ];
 
+  // Calculate total services whenever services state changes
+  useEffect(() => {
+    const total = Object.values(services).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    setTotalServices(total);
+  }, [services]);
+
   // Detect if viewing on desktop
   useEffect(() => {
     const handleResize = () => {
@@ -260,13 +192,6 @@ export default function GardeningPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Auto-select services when category is chosen
-  useEffect(() => {
-    if (selectedCategory && categories[selectedCategory]) {
-      setSelectedServices(categories[selectedCategory].services);
-    }
-  }, [selectedCategory]);
-
   const handleCategorySelect = (categoryName) => {
     setSelectedCategory(categoryName);
     setTimeout(() => {
@@ -276,75 +201,189 @@ export default function GardeningPage() {
 
   const handleBackToCategories = () => {
     setCurrentStep(1);
-    setSelectedServices([]);
-    setGardenSize(null);
-    setFrequency(null);
+    setSelectedPackage(null);
+    setServices({
+      "Lawn Mowing": 0,
+      "Hedge Trimming": 0,
+      Weeding: 0,
+      Planting: 0,
+      Pruning: 0,
+      "Leaf Removal": 0,
+    });
+    setGardenSize("");
+    setFrequency("");
+    setSpecialInstructions("");
     setPreferredTime("");
   };
 
-  const toggleService = (serviceId) => {
-    setSelectedServices((prev) => {
-      if (prev.includes(serviceId)) {
-        return prev.filter((id) => id !== serviceId);
-      } else {
-        return [...prev, serviceId];
-      }
-    });
+  const handleIncrement = (service) => {
+    setServices((prev) => ({
+      ...prev,
+      [service]: prev[service] + 1,
+    }));
+  };
+
+  const handleDecrement = (service) => {
+    if (services[service] > 0) {
+      setServices((prev) => ({
+        ...prev,
+        [service]: prev[service] - 1,
+      }));
+    }
   };
 
   const calculatePrice = () => {
-    if (!selectedCategory || !gardenSize || !frequency) return 0;
+    if (!selectedCategory || !selectedPackage || !gardenSize || !frequency)
+      return 0;
 
-    const basePrice = categories[selectedCategory]?.basePrice || 5000;
+    const categoryData = categories[selectedCategory];
+    const packageMultiplier = selectedPackage.multiplier;
     const sizeMultiplier =
       gardenSizes.find((size) => size.id === gardenSize)?.multiplier || 1;
     const frequencyDiscount =
-      serviceFrequencies.find((freq) => freq.id === frequency)?.discount || 0;
+      frequencies.find((freq) => freq.id === frequency)?.discount || 0;
 
-    const totalPrice = basePrice * sizeMultiplier;
-    const discountedPrice = totalPrice * (1 - frequencyDiscount);
+    const baseTotal =
+      (categoryData.basePrice + totalServices * categoryData.pricePerService) *
+      packageMultiplier *
+      sizeMultiplier;
+    const discountedPrice = baseTotal * (1 - frequencyDiscount);
 
     return Math.round(discountedPrice);
   };
 
+  const getEstimatedTime = () => {
+    if (!selectedCategory) return "1-2 days";
+    const baseTurnaround = categories[selectedCategory].turnaround;
+
+    if (selectedPackage) {
+      if (selectedPackage.multiplier >= 1.8) return "4-6 days";
+      if (selectedPackage.multiplier >= 1.4) return "3-5 days";
+      if (selectedPackage.multiplier >= 1) return baseTurnaround;
+      return "1-2 days";
+    }
+
+    return baseTurnaround;
+  };
+
+  const getServiceIcon = (serviceName) => {
+    switch (serviceName) {
+      case "Lawn Mowing":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+            />
+          </svg>
+        );
+      case "Hedge Trimming":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+            />
+          </svg>
+        );
+      case "Weeding":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+            />
+          </svg>
+        );
+      case "Planting":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+        );
+      case "Pruning":
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"
+            />
+          </svg>
+        );
+      default:
+        return (
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            />
+          </svg>
+        );
+    }
+  };
+
   const handleContinue = () => {
-    if (
-      selectedServices.length > 0 &&
-      gardenSize &&
-      frequency &&
-      preferredTime &&
-      typeof window !== "undefined"
-    ) {
-      const selectedFreq = serviceFrequencies.find(
-        (freq) => freq.id === frequency
-      );
+    if (selectedPackage && gardenSize && frequency && preferredTime) {
+      // Structure data like house cleaning for consistency
       const gardeningData = {
-        category: selectedCategory || "Basic Maintenance",
-        services: selectedServices,
-        gardenSize: gardenSize || "small",
-        frequency: frequency || "one-time",
-        preferredTime: preferredTime || "",
-        specialInstructions: "", // Added for consistency with repairs.js
+        category: selectedCategory,
+        package: selectedPackage.title,
+        services: services, // Changed from 'items' to 'services' but same structure
+        gardenSize: gardenSize,
+        frequency: frequency,
         estimatedPrice: calculatePrice(),
-        turnaround: selectedFreq?.turnaround || "1-2 days",
-        serviceDisplay: {
-          categoryName: selectedCategory || "Basic Maintenance",
-          serviceNames: selectedServices.map(
-            (id) =>
-              gardenServices.find((s) => s.id === id)?.title ||
-              "Unknown Service"
-          ),
-          gardenSizeName:
-            gardenSizes.find((size) => size.id === gardenSize)?.title ||
-            "Small",
-          frequencyName: selectedFreq?.title || "One-time Service",
-          estimatedPrice: calculatePrice(),
-          turnaround: selectedFreq?.turnaround || "1-2 days",
-        },
+        estimatedTime: getEstimatedTime(),
+        preferredTime: preferredTime,
+        specialInstructions: specialInstructions,
+        turnaround: categories[selectedCategory].turnaround,
       };
 
-      // Log for debugging
-      console.log("Saving gardeningServices:", gardeningData);
+      console.log("Saving gardeningDetails:", gardeningData);
 
       // Clear other service data to prevent conflicts
       localStorage.removeItem("cleaningItems");
@@ -352,31 +391,13 @@ export default function GardeningPage() {
       localStorage.removeItem("moveOutRooms");
       localStorage.removeItem("repairRequest");
 
-      // Save gardeningServices
-      try {
-        localStorage.setItem(
-          "gardeningServices",
-          JSON.stringify(gardeningData)
-        );
-        console.log("gardeningServices saved successfully");
-      } catch (error) {
-        console.error("Error saving gardeningServices to localStorage:", error);
-      }
-
+      localStorage.setItem("gardeningDetails", JSON.stringify(gardeningData));
       router.push("/booking-summary");
-    } else {
-      console.warn("Cannot proceed: Missing required fields", {
-        selectedServices,
-        gardenSize,
-        frequency,
-        preferredTime,
-        isClient: typeof window !== "undefined",
-      });
     }
   };
 
   const isReadyToContinue =
-    selectedServices.length > 0 && gardenSize && frequency && preferredTime;
+    selectedPackage && gardenSize && frequency && preferredTime;
 
   return (
     <>
@@ -402,7 +423,6 @@ export default function GardeningPage() {
             aria-label="Go back"
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"
               fill="none"
               viewBox="0 0 24 24"
@@ -445,7 +465,7 @@ export default function GardeningPage() {
                     currentStep >= 1 ? "text-green-600" : "text-gray-500"
                   }`}
                 >
-                  Choose Package
+                  Choose Service
                 </span>
               </div>
               <div
@@ -489,7 +509,6 @@ export default function GardeningPage() {
                   <div className="flex items-center mb-6">
                     <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
                         className="h-6 w-6"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -499,13 +518,13 @@ export default function GardeningPage() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={1.5}
-                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                         />
                       </svg>
                     </div>
                     <div>
                       <h2 className="text-lg font-medium text-gray-900">
-                        Choose Garden Package
+                        Choose Gardening Service
                       </h2>
                       <p className="text-sm text-gray-500">
                         Select the type of gardening service you need
@@ -524,12 +543,6 @@ export default function GardeningPage() {
                               : "border-gray-200"
                           }`}
                           onClick={() => handleCategorySelect(categoryName)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" &&
-                            handleCategorySelect(categoryName)
-                          }
                         >
                           <div className="flex items-start">
                             <div className="flex-shrink-0 mr-3">
@@ -558,11 +571,17 @@ export default function GardeningPage() {
                                 {categoryData.description}
                               </p>
                               <div className="text-xs text-gray-500">
-                                <span className="font-medium">
-                                  Starting from:
-                                </span>
-                                <div className="text-lg font-semibold text-green-600">
-                                  ₦{categoryData.basePrice.toLocaleString()}
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium">Duration:</span>
+                                  <span>{categoryData.turnaround}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium">
+                                    Starting from:
+                                  </span>
+                                  <span className="text-green-600 font-semibold">
+                                    ₦{categoryData.basePrice.toLocaleString()}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -579,36 +598,33 @@ export default function GardeningPage() {
                         {selectedCategory} includes:
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {categories[selectedCategory].services.map(
-                          (serviceId) => {
-                            const service = gardenServices.find(
-                              (s) => s.id === serviceId
-                            );
-                            return (
-                              <div
-                                key={serviceId}
-                                className="flex items-center"
-                              >
-                                <svg
-                                  className="h-4 w-4 text-green-500 mr-2"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                                <span className="text-sm text-gray-700">
-                                  {service?.title || "Unknown Service"}
-                                </span>
-                              </div>
-                            );
-                          }
-                        )}
+                        {[
+                          "Professional gardening team",
+                          "All gardening tools included",
+                          "Quality assurance inspection",
+                          "Flexible scheduling",
+                          "Satisfaction guarantee",
+                          "Eco-friendly practices",
+                        ].map((feature, index) => (
+                          <div key={index} className="flex items-center">
+                            <svg
+                              className="h-4 w-4 text-green-500 mr-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                            <span className="text-sm text-gray-700">
+                              {feature}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -618,16 +634,15 @@ export default function GardeningPage() {
               {/* Step 2: Service Customization */}
               <div className="w-full flex-shrink-0">
                 <div className="space-y-6">
-                  {/* Services customization */}
+                  {/* Gardening packages */}
                   <div className="bg-white rounded-xl shadow-sm p-6">
                     <div className="flex items-center mb-6">
                       <button
                         onClick={handleBackToCategories}
                         className="mr-4 text-gray-600 hover:text-gray-800 hover:bg-gray-100 p-2 rounded-full transition-all"
-                        aria-label="Go back to packages"
+                        aria-label="Go back to categories"
                       >
                         <svg
-                          xmlns="http://www.w3.org/2000/svg"
                           className="h-5 w-5"
                           fill="none"
                           viewBox="0 0 24 24"
@@ -643,7 +658,6 @@ export default function GardeningPage() {
                       </button>
                       <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
                         <svg
-                          xmlns="http://www.w3.org/2000/svg"
                           className="h-6 w-6"
                           fill="none"
                           viewBox="0 0 24 24"
@@ -653,47 +667,58 @@ export default function GardeningPage() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={1.5}
-                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                           />
                         </svg>
                       </div>
                       <div>
                         <h2 className="text-lg font-medium text-gray-900">
-                          Customize Services
+                          Choose Package
                         </h2>
                         <p className="text-sm text-gray-500">
-                          {selectedCategory} • Add or remove services
+                          {selectedCategory} • Select your gardening package
                         </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {gardenServices.map((service) => (
+                      {gardeningPackages.map((pkg) => (
                         <div
-                          key={service.id}
-                          className={`p-4 rounded-xl flex items-start border-2 transition-all duration-200 cursor-pointer ${
-                            selectedServices.includes(service.id)
+                          key={pkg.id}
+                          className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                            selectedPackage?.id === pkg.id
                               ? "border-green-500 bg-green-50"
                               : "border-gray-200 hover:border-green-300"
                           }`}
-                          onClick={() => toggleService(service.id)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && toggleService(service.id)
-                          }
+                          onClick={() => setSelectedPackage(pkg)}
                         >
-                          <div className="mr-4 mt-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-medium text-gray-900">
+                              {pkg.title}
+                            </h3>
                             <div
-                              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center ${
-                                selectedServices.includes(service.id)
-                                  ? "border-green-600 bg-green-600"
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                                selectedPackage?.id === pkg.id
+                                  ? "border-green-600"
                                   : "border-gray-300"
                               }`}
                             >
-                              {selectedServices.includes(service.id) && (
+                              {selectedPackage?.id === pkg.id && (
+                                <div className="w-3 h-3 rounded-full bg-green-600"></div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-3">
+                            {pkg.description}
+                          </p>
+                          <div className="space-y-1">
+                            {pkg.features.slice(0, 3).map((feature, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center text-xs text-gray-500"
+                              >
                                 <svg
-                                  className="h-4 w-4 text-white"
+                                  className="h-3 w-3 text-green-500 mr-1"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                   stroke="currentColor"
@@ -705,238 +730,240 @@ export default function GardeningPage() {
                                     d="M5 13l4 4L19 7"
                                   />
                                 </svg>
-                              )}
-                            </div>
+                                {feature}
+                              </div>
+                            ))}
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center mb-1">
+                          <div className="mt-2 text-right">
+                            <span className="text-sm font-medium text-green-600">
+                              {pkg.multiplier === 1
+                                ? "Standard Rate"
+                                : `${Math.round((pkg.multiplier - 1) * 100)}% ${
+                                    pkg.multiplier > 1 ? "more" : "less"
+                                  }`}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Service selection */}
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Select Services
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                      {Object.keys(services).map((service) => (
+                        <div
+                          key={service}
+                          className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                            services[service] > 0
+                              ? "border-green-400 bg-green-50"
+                              : "border-gray-200 hover:border-green-300"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
                               <div
-                                className={`w-8 h-8 rounded-full ${
-                                  selectedServices.includes(service.id)
+                                className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
+                                  services[service] > 0
                                     ? "bg-green-200 text-green-700"
                                     : "bg-gray-100 text-gray-600"
-                                } flex items-center justify-center mr-2`}
+                                }`}
                               >
-                                {service.icon}
+                                {getServiceIcon(service)}
                               </div>
-                              <span className="text-lg font-medium text-gray-900">
-                                {service.title}
+                              <span className="text-sm font-medium text-gray-900">
+                                {service}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600 ml-10">
-                              {service.description}
-                            </p>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Garden size selection */}
-                  <div className="bg-white rounded-xl shadow-sm p-6">
-                    <div className="flex items-center mb-6">
-                      <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-medium text-gray-900">
-                          Garden Size
-                        </h2>
-                        <p className="text-sm text-gray-500">
-                          Select the size of your garden
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {gardenSizes.map((size) => (
-                        <div
-                          key={size.id}
-                          className={`p-4 rounded-xl flex items-center justify-between border-2 transition-all duration-200 cursor-pointer ${
-                            gardenSize === size.id
-                              ? "border-green-500 bg-green-50"
-                              : "border-gray-200 hover:border-green-300"
-                          }`}
-                          onClick={() => setGardenSize(size.id)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && setGardenSize(size.id)
-                          }
-                        >
-                          <div className="flex items-center">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${
-                                gardenSize === size.id
-                                  ? "border-green-600"
-                                  : "border-gray-300"
+                          <div className="flex items-center justify-between mt-2">
+                            <button
+                              onClick={() => handleDecrement(service)}
+                              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                services[service] > 0
+                                  ? "text-green-600 hover:bg-green-100"
+                                  : "text-gray-300"
                               }`}
+                              disabled={services[service] === 0}
                             >
-                              {gardenSize === size.id && (
-                                <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                              )}
-                            </div>
-                            <div>
-                              <span className="text-base font-medium text-gray-900">
-                                {size.title}
-                              </span>
-                              <p className="text-sm text-gray-600">
-                                {size.description}
-                              </p>
-                            </div>
+                              <span className="text-sm">−</span>
+                            </button>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {services[service]}
+                            </span>
+                            <button
+                              onClick={() => handleIncrement(service)}
+                              className="w-6 h-6 rounded-full text-green-600 hover:bg-green-100 flex items-center justify-center"
+                            >
+                              <span className="text-sm">+</span>
+                            </button>
                           </div>
                         </div>
                       ))}
                     </div>
+                    <div className="text-center text-sm text-gray-500">
+                      <span className="font-semibold text-green-600">
+                        {totalServices}
+                      </span>{" "}
+                      services selected
+                    </div>
                   </div>
 
-                  {/* Service frequency */}
-                  <div className="bg-white rounded-xl shadow-sm p-6">
-                    <div className="flex items-center mb-6">
-                      <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-medium text-gray-900">
-                          Service Frequency
-                        </h2>
-                        <p className="text-sm text-gray-500">
-                          How often would you like the service?
-                        </p>
+                  {/* Garden size and frequency */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Garden size */}
+                    <div className="bg-white rounded-xl shadow-sm p-6">
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        Garden Size
+                      </h3>
+                      <div className="space-y-3">
+                        {gardenSizes.map((size) => (
+                          <div
+                            key={size.id}
+                            className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                              gardenSize === size.id
+                                ? "border-green-500 bg-green-50"
+                                : "border-gray-200 hover:border-green-300"
+                            }`}
+                            onClick={() => setGardenSize(size.id)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <div
+                                  className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                                    gardenSize === size.id
+                                      ? "border-green-600"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  {gardenSize === size.id && (
+                                    <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-900">
+                                    {size.name}
+                                  </span>
+                                  <p className="text-xs text-gray-500">
+                                    {size.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      {serviceFrequencies.map((freq) => (
-                        <div
-                          key={freq.id}
-                          className={`p-4 rounded-xl flex items-center justify-between border-2 transition-all duration-200 cursor-pointer ${
-                            frequency === freq.id
-                              ? "border-green-500 bg-green-50"
-                              : "border-gray-200 hover:border-green-300"
-                          }`}
-                          onClick={() => setFrequency(freq.id)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && setFrequency(freq.id)
-                          }
-                        >
-                          <div className="flex items-center">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${
-                                frequency === freq.id
-                                  ? "border-green-600"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {frequency === freq.id && (
-                                <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                              )}
-                            </div>
-                            <div>
-                              <span className="text-base font-medium text-gray-900">
-                                {freq.title}
+                    {/* Frequency */}
+                    <div className="bg-white rounded-xl shadow-sm p-6">
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        Service Frequency
+                      </h3>
+                      <div className="space-y-3">
+                        {frequencies.map((freq) => (
+                          <div
+                            key={freq.id}
+                            className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                              frequency === freq.id
+                                ? "border-green-500 bg-green-50"
+                                : "border-gray-200 hover:border-green-300"
+                            }`}
+                            onClick={() => setFrequency(freq.id)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <div
+                                  className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                                    frequency === freq.id
+                                      ? "border-green-600"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  {frequency === freq.id && (
+                                    <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-900">
+                                    {freq.name}
+                                  </span>
+                                  <p className="text-xs text-gray-500">
+                                    {freq.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="text-sm font-medium text-green-600">
+                                {freq.discount > 0
+                                  ? `-${Math.round(freq.discount * 100)}%`
+                                  : "Standard"}
                               </span>
-                              <p className="text-sm text-gray-600">
-                                {freq.description}
-                              </p>
                             </div>
                           </div>
-                          <div className="text-sm font-medium text-green-600">
-                            {freq.discount > 0
-                              ? `-${Math.round(freq.discount * 100)}%`
-                              : "Standard Rate"}
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Preferred time */}
+                  {/* Preferred time and special instructions */}
                   <div className="bg-white rounded-xl shadow-sm p-6">
-                    <div className="flex items-center mb-6">
-                      <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-medium text-gray-900">
-                          Preferred Service Time
-                        </h2>
-                        <p className="text-sm text-gray-500">
-                          Select your preferred time slot
-                        </p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Service Details
+                    </h3>
+
+                    {/* Preferred time */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Preferred service time
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {timeSlots.map((time) => (
+                          <button
+                            key={time}
+                            onClick={() => setPreferredTime(time)}
+                            className={`p-3 text-sm rounded-lg border-2 transition-all duration-200 ${
+                              preferredTime === time
+                                ? "border-green-500 bg-green-50 text-green-700"
+                                : "border-gray-200 hover:border-green-300"
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {timeSlots.map((time) => (
-                        <button
-                          key={time}
-                          onClick={() => setPreferredTime(time)}
-                          className={`p-3 text-sm rounded-lg border-2 transition-all duration-200 ${
-                            preferredTime === time
-                              ? "border-green-500 bg-green-50 text-green-700"
-                              : "border-gray-200 hover:border-green-300"
-                          }`}
-                          aria-label={`Select time slot ${time}`}
-                        >
-                          {time}
-                        </button>
-                      ))}
+
+                    {/* Special instructions */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Special instructions (optional)
+                      </label>
+                      <textarea
+                        value={specialInstructions}
+                        onChange={(e) => setSpecialInstructions(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        rows={3}
+                        placeholder="Any special requests or areas that need extra attention..."
+                      />
                     </div>
                   </div>
 
                   {/* Service guarantee */}
                   <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Our Gardening Guarantee
+                      Our Gardening Promise
                     </h3>
                     <div className="space-y-2">
                       {[
-                        "Experienced and certified gardeners",
-                        "Professional equipment for all garden types",
-                        "Eco-friendly practices and waste removal",
-                        "Satisfaction guarantee or we'll fix it for free",
-                      ].map((guarantee, index) => (
+                        "Trained and experienced gardening professionals",
+                        "Professional equipment and eco-friendly practices",
+                        "Comprehensive insurance coverage",
+                        "Quality assurance inspection after every service",
+                        "100% satisfaction guarantee or we'll return for free",
+                      ].map((promise, index) => (
                         <div key={index} className="flex items-start">
                           <svg
                             className="h-5 w-5 text-green-500 mr-2 mt-0.5"
@@ -951,7 +978,7 @@ export default function GardeningPage() {
                               d="M5 13l4 4L19 7"
                             />
                           </svg>
-                          <p className="text-sm text-gray-700">{guarantee}</p>
+                          <p className="text-sm text-gray-700">{promise}</p>
                         </div>
                       ))}
                     </div>
@@ -965,12 +992,11 @@ export default function GardeningPage() {
                           Service Summary
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {selectedCategory || "No category selected"} •{" "}
-                          {selectedServices.length}{" "}
-                          {selectedServices.length === 1
-                            ? "service"
-                            : "services"}{" "}
-                          selected
+                          {selectedCategory} • {selectedPackage?.title} •{" "}
+                          {totalServices} services
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Estimated duration: {getEstimatedTime()}
                         </p>
                       </div>
                       <div className="text-right">
@@ -978,6 +1004,20 @@ export default function GardeningPage() {
                         <p className="text-xl font-bold text-green-600">
                           ₦{calculatePrice().toLocaleString()}
                         </p>
+                        {frequency !== "one-time" && (
+                          <p className="text-xs text-green-600">
+                            {frequencies.find((f) => f.id === frequency)
+                              ?.discount > 0 &&
+                              `Saved ₦${Math.round(
+                                (calculatePrice() *
+                                  frequencies.find((f) => f.id === frequency)
+                                    .discount) /
+                                  (1 -
+                                    frequencies.find((f) => f.id === frequency)
+                                      .discount)
+                              ).toLocaleString()}`}
+                          </p>
+                        )}
                       </div>
                     </div>
 

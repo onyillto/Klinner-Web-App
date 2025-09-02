@@ -42,7 +42,7 @@ export default function BottomNavigation() {
       label: "Home",
     },
     {
-      href: "/booking/bookings",
+      href: "/booking/my-bookings",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"

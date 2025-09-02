@@ -690,6 +690,9 @@ video {
 .z-50 {
   z-index: 50;
 }
+.z-20 {
+  z-index: 20;
+}
 .col-span-3 {
   grid-column: span 3 / span 3;
 }
@@ -1692,6 +1695,9 @@ video {
 .pb-2 {
   padding-bottom: 0.5rem;
 }
+.pb-28 {
+  padding-bottom: 7rem;
+}
 .text-center {
   text-align: center;
 }
@@ -2692,6 +2698,10 @@ body {
 
   .lg\:pl-56 {
     padding-left: 14rem;
+  }
+
+  .lg\:pb-8 {
+    padding-bottom: 2rem;
   }
 
   .lg\:text-2xl {

@@ -430,7 +430,7 @@ export default function MoveOutPage() {
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-3xl mx-auto p-4 md:p-6 lg:p-8 pb-28 lg:pb-8">
           {/* Progress indicator */}
           <div className="flex items-center justify-center mb-6">
             <div className="flex items-center space-x-4">
@@ -989,33 +989,50 @@ export default function MoveOutPage() {
                       </div>
                     </div>
 
-                    <div
-                      className={
-                        isDesktop
-                          ? "mt-6"
-                          : "fixed bottom-0 left-0 right-0 p-4 bg-white border-t"
-                      }
-                    >
-                      <button
-                        onClick={handleContinue}
-                        disabled={!isReadyToContinue}
-                        className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
-                          isReadyToContinue
-                            ? "bg-blue-600 hover:bg-blue-700 text-white"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
-                      >
-                        {isReadyToContinue
-                          ? "Continue to Booking"
-                          : "Complete all selections"}
-                      </button>
-                    </div>
+                    {isDesktop && (
+                      <div className="mt-6">
+                        <button
+                          onClick={handleContinue}
+                          disabled={!isReadyToContinue}
+                          className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
+                            isReadyToContinue
+                              ? "bg-blue-600 hover:bg-blue-700 text-white"
+                              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          }`}
+                        >
+                          {isReadyToContinue
+                            ? "Continue to Booking"
+                            : "Complete all selections"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Sticky Footer for Mobile */}
+        {currentStep === 2 && !isDesktop && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-20">
+            <div className="max-w-3xl mx-auto">
+              <button
+                onClick={handleContinue}
+                disabled={!isReadyToContinue}
+                className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
+                  isReadyToContinue
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                {isReadyToContinue
+                  ? "Continue to Booking"
+                  : "Complete all selections"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

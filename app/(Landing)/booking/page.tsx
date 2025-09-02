@@ -14,8 +14,8 @@ export default function BookingPage() {
   const serviceImages = {
     laundry: "/laundry2.jpg",
     cleaning: "/cleaning2.jpg",
-    gardening: "/gardening-service.svg",
-    repairs: "/repairs-service.svg",
+    gardening: "/grasss.jpg",
+    repairs: "/fix.jpg",
     "move-out": "/move-out-service.svg",
   };
 
@@ -23,9 +23,9 @@ export default function BookingPage() {
   const serviceGalleryImages = {
     laundry: ["/laundry1.jpg", "/laundry3.jpg"],
     cleaning: ["/cleaning3.jpg", "/cleaning2.jpg"],
-    gardening: ["/gardening1.svg", "/gardening2.svg"],
-    repairs: ["/repairs1.svg", "/repairs2.svg"],
-    moving: ["/move-out1.svg", "/move-out2.svg"],
+    gardening: ["/grass.jpg", "/gras.jpg"],
+    repairs: ["/fix.jpg", "/repair.jpg"],
+    moving: ["/moving.jpg", "/pack.jpg"],
   };
 
   useEffect(() => {

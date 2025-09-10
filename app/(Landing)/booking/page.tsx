@@ -112,7 +112,7 @@ export default function BookingPage() {
           <div className="max-w-5xl mx-auto flex items-center">
             <button
               onClick={() => router.back()}
-              className="mr-4 p-2 rounded-full hover:bg-gray-500 text-black"
+              className="mr-4 p-2 rounded-full hover:bg-gray-700 text-black"
               aria-label="Go back"
             >
               <svg
@@ -157,8 +157,8 @@ export default function BookingPage() {
               <div className="flex items-center mt-2">
                 <span className="text-yellow-500">★</span>
                 <span className="ml-1 text-black">{serviceData.rating}</span>
-                <span className="ml-1 text-gray-500">|</span>
-                <span className="ml-1 text-gray-500">
+                <span className="ml-1 text-gray-700">|</span>
+                <span className="ml-1 text-gray-700">
                   {serviceData.reviews.toLocaleString()} Reviews
                 </span>
               </div>

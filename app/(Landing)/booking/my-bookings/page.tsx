@@ -530,7 +530,7 @@ export default function BookingsPage() {
               <h3 className="text-xl font-medium text-gray-900 mb-2">
                 No Bookings Found
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-700 mb-6">
                 You don't have any bookings matching your current filter.
               </p>
               <button
@@ -576,7 +576,7 @@ export default function BookingsPage() {
                                   booking.status.slice(1).replace("_", " ")}
                               </span>
                             </div>
-                            <p className="text-gray-500 mt-1">
+                            <p className="text-gray-700 mt-1">
                               ID: {booking.service_id || booking.id}
                             </p>
                           </div>
@@ -598,7 +598,7 @@ export default function BookingsPage() {
 
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <div className="flex items-center text-gray-500">
+                            <div className="flex items-center text-gray-700">
                               <svg
                                 className="h-5 w-5 mr-2"
                                 fill="none"
@@ -617,7 +617,7 @@ export default function BookingsPage() {
                                 {formatBookingTime(booking.time)}
                               </span>
                             </div>
-                            <div className="flex items-center text-gray-500 mt-2">
+                            <div className="flex items-center text-gray-700 mt-2">
                               <svg
                                 className="h-5 w-5 mr-2"
                                 fill="none"
@@ -642,7 +642,7 @@ export default function BookingsPage() {
                           </div>
 
                           <div>
-                            <p className="text-sm font-medium text-gray-500 mb-2">
+                            <p className="text-sm font-medium text-gray-700 mb-2">
                               Service Details
                             </p>
                             <div className="flex flex-wrap gap-1">

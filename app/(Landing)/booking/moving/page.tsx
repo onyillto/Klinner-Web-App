@@ -424,7 +424,7 @@ export default function MoveOutPage() {
             <h1 className="text-2xl font-bold text-gray-900">
               Moving Services
             </h1>
-            <p className="text-sm text-gray-500 hidden md:block">
+            <p className="text-sm text-gray-700 hidden md:block">
               Professional moving and cleaning solutions
             </p>
           </div>
@@ -439,14 +439,14 @@ export default function MoveOutPage() {
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 1
                       ? "bg-purple-600 text-white"
-                      : "bg-gray-200 text-gray-500"
+                      : "bg-gray-200 text-gray-700"
                   }`}
                 >
                   1
                 </div>
                 <span
                   className={`ml-2 text-sm font-medium ${
-                    currentStep >= 1 ? "text-purple-600" : "text-gray-500"
+                    currentStep >= 1 ? "text-purple-600" : "text-gray-700"
                   }`}
                 >
                   Choose Service
@@ -462,14 +462,14 @@ export default function MoveOutPage() {
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 2
                       ? "bg-purple-600 text-white"
-                      : "bg-gray-200 text-gray-500"
+                      : "bg-gray-200 text-gray-700"
                   }`}
                 >
                   2
                 </div>
                 <span
                   className={`ml-2 text-sm font-medium ${
-                    currentStep >= 2 ? "text-purple-600" : "text-gray-500"
+                    currentStep >= 2 ? "text-purple-600" : "text-gray-700"
                   }`}
                 >
                   Customize
@@ -511,7 +511,7 @@ export default function MoveOutPage() {
                       <h2 className="text-lg font-medium text-gray-900">
                         Choose Moving Service
                       </h2>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-700">
                         Select the type of moving service you need
                       </p>
                     </div>
@@ -555,7 +555,7 @@ export default function MoveOutPage() {
                               <p className="text-sm text-gray-600 mb-3">
                                 {categoryData.description}
                               </p>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-gray-700">
                                 <div className="flex justify-between items-center mb-1">
                                   <span className="font-medium">Duration:</span>
                                   <span>{categoryData.duration}</span>
@@ -657,7 +657,7 @@ export default function MoveOutPage() {
                         <h2 className="text-lg font-medium text-gray-900">
                           Select Rooms
                         </h2>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                           {selectedCategory} • Enter number of rooms
                         </p>
                       </div>
@@ -760,7 +760,7 @@ export default function MoveOutPage() {
                         <h2 className="text-lg font-medium text-gray-900">
                           Property Size
                         </h2>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                           Select your property size for accurate pricing
                         </p>
                       </div>
@@ -826,7 +826,7 @@ export default function MoveOutPage() {
                         <h2 className="text-lg font-medium text-gray-900">
                           Additional Services
                         </h2>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                           Optional add-ons to enhance your service
                         </p>
                       </div>
@@ -969,20 +969,20 @@ export default function MoveOutPage() {
                         <h3 className="text-lg font-medium text-gray-900">
                           Service Summary
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                           {selectedCategory} • {totalRooms}{" "}
                           {totalRooms === 1 ? "room" : "rooms"} •{" "}
                           {propertySize &&
                             propertySizes.find((s) => s.id === propertySize)
                               ?.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-700">
                           Duration: {categories[selectedCategory]?.duration} •{" "}
                           {additionalServices.length} add-ons selected
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-500">Estimated Price</p>
+                        <p className="text-sm text-gray-700">Estimated Price</p>
                         <p className="text-xl font-bold text-purple-600">
                           ₦{calculatePrice().toLocaleString()}
                         </p>
@@ -997,7 +997,7 @@ export default function MoveOutPage() {
                           className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                             isReadyToContinue
                               ? "bg-purple-600 hover:bg-blue-700 text-white"
-                              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-gray-300 text-gray-700 cursor-not-allowed"
                           }`}
                         >
                           {isReadyToContinue
@@ -1023,7 +1023,7 @@ export default function MoveOutPage() {
                 className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                   isReadyToContinue
                     ? "bg-purple-600 hover:bg-blue-700 text-white"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-300 text-gray-700 cursor-not-allowed"
                 }`}
               >
                 {isReadyToContinue

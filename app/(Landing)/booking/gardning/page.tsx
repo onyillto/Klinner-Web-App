@@ -440,7 +440,7 @@ export default function GardeningPage() {
             <h1 className="text-2xl font-bold text-gray-900">
               Gardening Services
             </h1>
-            <p className="text-sm text-gray-500 hidden md:block">
+            <p className="text-sm text-gray-700 hidden md:block">
               Customize your gardening service
             </p>
           </div>
@@ -455,14 +455,14 @@ export default function GardeningPage() {
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 1
                       ? "bg-green-600 text-white"
-                      : "bg-gray-200 text-gray-500"
+                      : "bg-gray-200 text-gray-700"
                   }`}
                 >
                   1
                 </div>
                 <span
                   className={`ml-2 text-sm font-medium ${
-                    currentStep >= 1 ? "text-green-600" : "text-gray-500"
+                    currentStep >= 1 ? "text-green-600" : "text-gray-700"
                   }`}
                 >
                   Choose Service
@@ -478,14 +478,14 @@ export default function GardeningPage() {
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 2
                       ? "bg-green-600 text-white"
-                      : "bg-gray-200 text-gray-500"
+                      : "bg-gray-200 text-gray-700"
                   }`}
                 >
                   2
                 </div>
                 <span
                   className={`ml-2 text-sm font-medium ${
-                    currentStep >= 2 ? "text-green-600" : "text-gray-500"
+                    currentStep >= 2 ? "text-green-600" : "text-gray-700"
                   }`}
                 >
                   Customize
@@ -526,7 +526,7 @@ export default function GardeningPage() {
                       <h2 className="text-lg font-medium text-gray-900">
                         Choose Gardening Service
                       </h2>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-700">
                         Select the type of gardening service you need
                       </p>
                     </div>
@@ -570,7 +570,7 @@ export default function GardeningPage() {
                               <p className="text-sm text-gray-600 mb-2">
                                 {categoryData.description}
                               </p>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-gray-700">
                                 <div className="flex justify-between items-center">
                                   <span className="font-medium">Duration:</span>
                                   <span>{categoryData.turnaround}</span>
@@ -675,7 +675,7 @@ export default function GardeningPage() {
                         <h2 className="text-lg font-medium text-gray-900">
                           Choose Package
                         </h2>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                           {selectedCategory} • Select your gardening package
                         </p>
                       </div>
@@ -715,7 +715,7 @@ export default function GardeningPage() {
                             {pkg.features.slice(0, 3).map((feature, index) => (
                               <div
                                 key={index}
-                                className="flex items-center text-xs text-gray-500"
+                                className="flex items-center text-xs text-gray-700"
                               >
                                 <svg
                                   className="h-3 w-3 text-green-500 mr-1"
@@ -804,7 +804,7 @@ export default function GardeningPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="text-center text-sm text-gray-500">
+                    <div className="text-center text-sm text-gray-700">
                       <span className="font-semibold text-green-600">
                         {totalServices}
                       </span>{" "}
@@ -847,7 +847,7 @@ export default function GardeningPage() {
                                   <span className="font-medium text-gray-900">
                                     {size.name}
                                   </span>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-gray-700">
                                     {size.description}
                                   </p>
                                 </div>
@@ -891,7 +891,7 @@ export default function GardeningPage() {
                                   <span className="font-medium text-gray-900">
                                     {freq.name}
                                   </span>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-gray-700">
                                     {freq.description}
                                   </p>
                                 </div>
@@ -991,16 +991,16 @@ export default function GardeningPage() {
                         <h3 className="text-lg font-medium text-gray-900">
                           Service Summary
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                           {selectedCategory} • {selectedPackage?.title} •{" "}
                           {totalServices} services
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-700">
                           Estimated duration: {getEstimatedTime()}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-500">Estimated Price</p>
+                        <p className="text-sm text-gray-700">Estimated Price</p>
                         <p className="text-xl font-bold text-green-600">
                           ₦{calculatePrice().toLocaleString()}
                         </p>
@@ -1029,7 +1029,7 @@ export default function GardeningPage() {
                           className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                             isReadyToContinue
                               ? "bg-green-600 hover:bg-green-700 text-white"
-                              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-gray-300 text-gray-700 cursor-not-allowed"
                           }`}
                         >
                           {isReadyToContinue
@@ -1055,7 +1055,7 @@ export default function GardeningPage() {
                 className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                   isReadyToContinue
                     ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-300 text-gray-700 cursor-not-allowed"
                 }`}
               >
                 {isReadyToContinue

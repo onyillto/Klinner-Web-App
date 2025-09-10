@@ -482,7 +482,7 @@ export default function UniversalBookingSummaryPage() {
             <h1 className="text-2xl font-bold text-gray-900">
               {getServiceName()} Booking
             </h1>
-            <p className="text-sm text-gray-500 hidden md:block">
+            <p className="text-sm text-gray-700 hidden md:block">
               Review and confirm your service booking
             </p>
           </div>
@@ -586,7 +586,7 @@ export default function UniversalBookingSummaryPage() {
                           <p className="text-sm text-gray-600 mt-1">
                             {serviceDetails.details}
                           </p>
-                          <div className="flex items-center mt-2 text-xs text-gray-500">
+                          <div className="flex items-center mt-2 text-xs text-gray-700">
                             <svg
                               className="h-4 w-4 mr-1"
                               fill="none"
@@ -773,7 +773,7 @@ export default function UniversalBookingSummaryPage() {
                         <p className="text-sm font-medium text-gray-900">
                           {getServiceName()}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-700">
                           {serviceDetails.category}
                         </p>
                       </div>
@@ -820,7 +820,7 @@ export default function UniversalBookingSummaryPage() {
                     className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-300 ${
                       isFormValid() && !isLoading
                         ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gray-300 text-gray-700 cursor-not-allowed"
                     }`}
                   >
                     {isLoading ? (
@@ -851,7 +851,7 @@ export default function UniversalBookingSummaryPage() {
                     )}
                   </button>
 
-                  <p className="text-xs text-gray-500 text-center mt-4">
+                  <p className="text-xs text-gray-700 text-center mt-4">
                     By confirming, you agree to our terms of service and privacy
                     policy.
                   </p>

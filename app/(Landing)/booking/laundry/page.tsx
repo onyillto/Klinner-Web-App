@@ -287,7 +287,7 @@ export default function LaundryPage() {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Laundry Service</h1>
-          <p className="text-sm text-gray-500 hidden md:block">
+          <p className="text-sm text-gray-700 hidden md:block">
             Customize your laundry service
           </p>
         </div>
@@ -302,14 +302,14 @@ export default function LaundryPage() {
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   currentStep >= 1
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    : "bg-gray-200 text-gray-700"
                 }`}
               >
                 1
               </div>
               <span
                 className={`ml-2 text-sm font-medium ${
-                  currentStep >= 1 ? "text-purple-600" : "text-gray-500"
+                  currentStep >= 1 ? "text-purple-600" : "text-gray-700"
                 }`}
               >
                 Choose Service
@@ -325,14 +325,14 @@ export default function LaundryPage() {
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   currentStep >= 2
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    : "bg-gray-200 text-gray-700"
                 }`}
               >
                 2
               </div>
               <span
                 className={`ml-2 text-sm font-medium ${
-                  currentStep >= 2 ? "text-purple-600" : "text-gray-500"
+                  currentStep >= 2 ? "text-purple-600" : "text-gray-700"
                 }`}
               >
                 Customize
@@ -374,7 +374,7 @@ export default function LaundryPage() {
                     <h2 className="text-lg font-medium text-gray-900">
                       Choose Laundry Service
                     </h2>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-700">
                       Select the type of laundry service you need
                     </p>
                   </div>
@@ -418,7 +418,7 @@ export default function LaundryPage() {
                             <p className="text-sm text-gray-600 mb-2">
                               {categoryData.description}
                             </p>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-700">
                               <div className="flex justify-between items-center">
                                 <span className="font-medium">Turnaround:</span>
                                 <span>{categoryData.turnaround}</span>
@@ -525,7 +525,7 @@ export default function LaundryPage() {
                       <h2 className="text-lg font-medium text-gray-900">
                         Choose Laundry Option
                       </h2>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-700">
                         {selectedCategory} • Select how you want your laundry
                         done
                       </p>
@@ -607,7 +607,7 @@ export default function LaundryPage() {
                         <span className="text-xl">+</span>
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-700 mt-1">
                       Estimated weight: ~
                       {Math.max(1, Math.floor(itemCount / 3))} kg
                     </p>
@@ -657,16 +657,16 @@ export default function LaundryPage() {
                       <h3 className="text-lg font-medium text-gray-900">
                         Service Summary
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-700">
                         {selectedCategory} • {selectedOption?.title} •{" "}
                         {itemCount} items
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-700">
                         Turnaround: {categories[selectedCategory]?.turnaround}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">Estimated Price</p>
+                      <p className="text-sm text-gray-700">Estimated Price</p>
                       <p className="text-xl font-bold text-purple-600">
                         ₦{calculatePrice().toLocaleString()}
                       </p>
@@ -680,7 +680,7 @@ export default function LaundryPage() {
                         className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                           isReadyToContinue
                             ? "bg-purple-600 hover:bg-purple-700 text-white"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-gray-300 text-gray-700 cursor-not-allowed"
                         }`}
                       >
                         {isReadyToContinue
@@ -705,7 +705,7 @@ export default function LaundryPage() {
               className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                 isReadyToContinue
                   ? "bg-purple-600 hover:bg-purple-700 text-white"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-300 text-gray-700 cursor-not-allowed"
               }`}
             >
               {isReadyToContinue

@@ -302,7 +302,7 @@ export default function RepairsPage() {
             <h1 className="text-2xl font-bold text-gray-900">
               Repair Services
             </h1>
-            <p className="text-sm text-gray-500 hidden md:block">
+            <p className="text-sm text-gray-700 hidden md:block">
               Request a repair specialist
             </p>
           </div>
@@ -338,7 +338,7 @@ export default function RepairsPage() {
                 <h2 className="text-lg font-medium text-gray-900">
                   Select Repair Type
                 </h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-700">
                   Choose the type of repair service you need
                 </p>
               </div>
@@ -415,7 +415,7 @@ export default function RepairsPage() {
                 <h2 className="text-lg font-medium text-gray-900">
                   How Urgent Is Your Request?
                 </h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-700">
                   Select the required response time
                 </p>
               </div>
@@ -484,7 +484,7 @@ export default function RepairsPage() {
                 <h2 className="text-lg font-medium text-gray-900">
                   Preferred Service Time
                 </h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-700">
                   Select your preferred time slot
                 </p>
               </div>
@@ -529,7 +529,7 @@ export default function RepairsPage() {
                 <h2 className="text-lg font-medium text-gray-900">
                   Describe Your Issue
                 </h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-700">
                   Provide details to help our technicians prepare
                 </p>
               </div>
@@ -586,7 +586,7 @@ export default function RepairsPage() {
                       ? "Click to add more photos"
                       : "Click to upload photos"}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-700">
                     PNG, JPG, GIF up to 10MB
                   </p>
                 </label>
@@ -627,7 +627,7 @@ export default function RepairsPage() {
                             />
                           </svg>
                         </button>
-                        <p className="text-xs text-gray-500 mt-1 truncate">
+                        <p className="text-xs text-gray-700 mt-1 truncate">
                           {photo.name}
                         </p>
                         <p className="text-xs text-gray-400">

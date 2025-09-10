@@ -206,9 +206,9 @@ export default function SignUpPage() {
                   disabled={isLoading}
                 >
                   {showPassword ? (
-                    <EyeOff className="text-gray-500 w-5 h-5" />
+                    <EyeOff className="text-gray-700 w-5 h-5" />
                   ) : (
-                    <Eye className="text-gray-500 w-5 h-5" />
+                    <Eye className="text-gray-700 w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -232,9 +232,9 @@ export default function SignUpPage() {
                   disabled={isLoading}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="text-gray-500 w-5 h-5" />
+                    <EyeOff className="text-gray-700 w-5 h-5" />
                   ) : (
-                    <Eye className="text-gray-500 w-5 h-5" />
+                    <Eye className="text-gray-700 w-5 h-5" />
                   )}
                 </button>
               </div>

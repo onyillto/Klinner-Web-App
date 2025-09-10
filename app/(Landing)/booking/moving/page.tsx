@@ -438,7 +438,7 @@ export default function MoveOutPage() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 1
-                      ? "bg-blue-600 text-white"
+                      ? "bg-purple-600 text-white"
                       : "bg-gray-200 text-gray-500"
                   }`}
                 >
@@ -446,7 +446,7 @@ export default function MoveOutPage() {
                 </div>
                 <span
                   className={`ml-2 text-sm font-medium ${
-                    currentStep >= 1 ? "text-blue-600" : "text-gray-500"
+                    currentStep >= 1 ? "text-purple-600" : "text-gray-500"
                   }`}
                 >
                   Choose Service
@@ -454,14 +454,14 @@ export default function MoveOutPage() {
               </div>
               <div
                 className={`w-12 h-0.5 ${
-                  currentStep >= 2 ? "bg-blue-600" : "bg-gray-200"
+                  currentStep >= 2 ? "bg-purple-600" : "bg-gray-200"
                 }`}
               ></div>
               <div className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     currentStep >= 2
-                      ? "bg-blue-600 text-white"
+                      ? "bg-purple-600 text-white"
                       : "bg-gray-200 text-gray-500"
                   }`}
                 >
@@ -469,7 +469,7 @@ export default function MoveOutPage() {
                 </div>
                 <span
                   className={`ml-2 text-sm font-medium ${
-                    currentStep >= 2 ? "text-blue-600" : "text-gray-500"
+                    currentStep >= 2 ? "text-purple-600" : "text-gray-500"
                   }`}
                 >
                   Customize
@@ -491,7 +491,7 @@ export default function MoveOutPage() {
               <div className="w-full flex-shrink-0">
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
                   <div className="flex items-center mb-6">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 text-purple-600 flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-6 w-6"
@@ -564,7 +564,7 @@ export default function MoveOutPage() {
                                   <span className="font-medium">
                                     Starting from:
                                   </span>
-                                  <span className="text-blue-600 font-semibold">
+                                  <span className="text-purple-600 font-semibold">
                                     ₦{categoryData.basePrice.toLocaleString()}
                                   </span>
                                 </div>
@@ -637,7 +637,7 @@ export default function MoveOutPage() {
                           />
                         </svg>
                       </button>
-                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 text-purple-600 flex items-center justify-center mr-3">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-6 w-6"
@@ -666,7 +666,7 @@ export default function MoveOutPage() {
                     {/* Progress indicator */}
                     <div className="mb-6 bg-gray-100 h-2 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-blue-600 transition-all duration-300"
+                        className="h-full bg-purple-600 transition-all duration-300"
                         style={{ width: `${Math.min(totalRooms * 8, 100)}%` }}
                       ></div>
                     </div>
@@ -701,7 +701,7 @@ export default function MoveOutPage() {
                               onClick={() => handleDecrement(room)}
                               className={`w-10 h-10 flex items-center justify-center rounded-l-lg ${
                                 rooms[room] > 0
-                                  ? "text-blue-600 hover:bg-gray-100"
+                                  ? "text-purple-600 hover:bg-gray-100"
                                   : "text-gray-300"
                               }`}
                               disabled={rooms[room] === 0}
@@ -714,7 +714,7 @@ export default function MoveOutPage() {
                             </span>
                             <button
                               onClick={() => handleIncrement(room)}
-                              className="w-10 h-10 flex items-center justify-center rounded-r-lg text-blue-600 hover:bg-gray-100"
+                              className="w-10 h-10 flex items-center justify-center rounded-r-lg text-purple-600 hover:bg-gray-100"
                               aria-label={`Increase ${room}`}
                             >
                               <span className="text-xl">+</span>
@@ -727,7 +727,7 @@ export default function MoveOutPage() {
                     {/* Selected room count */}
                     <div className="mt-6 text-center">
                       <p className="text-gray-600">
-                        <span className="font-semibold text-blue-600 text-xl">
+                        <span className="font-semibold text-purple-600 text-xl">
                           {totalRooms}
                         </span>
                         <span className="ml-1 text-gray-700">
@@ -740,7 +740,7 @@ export default function MoveOutPage() {
                   {/* Property size selection */}
                   <div className="bg-white rounded-xl shadow-sm p-6">
                     <div className="flex items-center mb-6">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 text-purple-600 flex items-center justify-center mr-3">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-6 w-6"
@@ -781,12 +781,12 @@ export default function MoveOutPage() {
                             <div
                               className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${
                                 propertySize === size.id
-                                  ? "border-blue-600"
+                                  ? "border-purple-600"
                                   : "border-gray-300"
                               }`}
                             >
                               {propertySize === size.id && (
-                                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                                <div className="w-3 h-3 rounded-full bg-purple-600"></div>
                               )}
                             </div>
                             <div>
@@ -806,7 +806,7 @@ export default function MoveOutPage() {
                   {/* Additional services */}
                   <div className="bg-white rounded-xl shadow-sm p-6">
                     <div className="flex items-center mb-6">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 text-purple-600 flex items-center justify-center mr-3">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-6 w-6"
@@ -848,7 +848,7 @@ export default function MoveOutPage() {
                               <div
                                 className={`w-6 h-6 rounded-md border-2 flex items-center justify-center mr-3 ${
                                   additionalServices.includes(service.id)
-                                    ? "border-blue-600 bg-blue-600"
+                                    ? "border-purple-600 bg-purple-600"
                                     : "border-gray-300"
                                 }`}
                               >
@@ -877,7 +877,7 @@ export default function MoveOutPage() {
                                 </span>
                               </div>
                             </div>
-                            <span className="text-sm font-semibold text-blue-600">
+                            <span className="text-sm font-semibold text-purple-600">
                               ₦{service.price.toLocaleString()}
                             </span>
                           </div>
@@ -983,7 +983,7 @@ export default function MoveOutPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Estimated Price</p>
-                        <p className="text-xl font-bold text-blue-600">
+                        <p className="text-xl font-bold text-purple-600">
                           ₦{calculatePrice().toLocaleString()}
                         </p>
                       </div>
@@ -996,7 +996,7 @@ export default function MoveOutPage() {
                           disabled={!isReadyToContinue}
                           className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                             isReadyToContinue
-                              ? "bg-blue-600 hover:bg-blue-700 text-white"
+                              ? "bg-purple-600 hover:bg-blue-700 text-white"
                               : "bg-gray-300 text-gray-500 cursor-not-allowed"
                           }`}
                         >
@@ -1022,7 +1022,7 @@ export default function MoveOutPage() {
                 disabled={!isReadyToContinue}
                 className={`w-full py-4 rounded-xl text-lg font-medium shadow-lg transition-all duration-300 ${
                   isReadyToContinue
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-purple-600 hover:bg-blue-700 text-white"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >

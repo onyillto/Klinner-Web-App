@@ -9,11 +9,11 @@ import DesktopSidebar from "./components/DesktopSidebar";
 import ProgressBar from "./components/ProgressBar";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useRouter } from "next/navigation"; // Import router
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
   useEffect(() => {
     // If authentication check completed and user is not authenticated
@@ -23,32 +23,25 @@ export default function Home() {
     }
   }, [loading, isAuthenticated, router]);
 
-  // Show loading state while authentication is being checked
-  if (loading) {
+  // Show loading state while authentication is being checked or user info is not available
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        Loading...
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#9c1323] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
 
-  // If not authenticated, don't render the page content
-  // This prevents flash of content before redirect happens
-  if (!isAuthenticated()) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Redirecting to login...
-      </div>
-    );
-  }
-
-  // Only render the page content if authenticated
+  // Only render the page content if authenticated and user data is available
   return (
     <div className="bg-gray-50 min-h-screen relative">
       <main className="mx-auto bg-white min-h-screen shadow-lg pb-16 lg:pl-56">
         <div className="max-w-md mx-auto lg:max-w-none lg:mx-0 lg:px-8">
           {/* User Header with dynamic user name */}
-          <UserHeader name={user ? user.firstName || user.name : "Guest"} />
+          <UserHeader name={user.firstName || user.name || "Guest"} />
 
           <div className="lg:grid lg:grid-cols-12 lg:gap-6">
             <div className="lg:col-span-9">

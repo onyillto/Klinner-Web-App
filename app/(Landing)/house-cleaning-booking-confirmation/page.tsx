@@ -51,7 +51,7 @@ function PaymentVerificationContent() {
         console.log("Verifying payment:", reference);
 
         const response = await fetch(
-          "https://klinner.onrender.com/api/v1/house-cleaning/verify-payment",
+          "https://klinner.onrender.com/api/v1/services/verify-payment",
           {
             method: "POST",
             headers: {

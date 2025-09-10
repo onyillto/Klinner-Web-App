@@ -158,7 +158,7 @@ function PaymentVerificationContent() {
           {status === "error" && "Verification Error"}
         </h2>
 
-        <p className="text-gray-600 mb-6">{message}</p>
+        <p className="text-gray-900 mb-6">{message}</p>
 
         <div className="space-y-3">
           {status === "success" && (

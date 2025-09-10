@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [timeoutExpired, setTimeoutExpired] = useState(false);
 
   useEffect(() => {
     // If authentication check completed and user is not authenticated
@@ -23,13 +24,30 @@ export default function Home() {
     }
   }, [loading, isAuthenticated, router]);
 
+  // Set up 10-second timeout for page reload
+  useEffect(() => {
+    if (loading || !user) {
+      const timer = setTimeout(() => {
+        setTimeoutExpired(true);
+        // Reload the page after 10 seconds
+        window.location.reload();
+      }, 10000);
+
+      // Clear timeout if user data loads before 10 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [loading, user]);
+
   // Show loading state while authentication is being checked or user info is not available
   if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#9c1323] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-700 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+          {timeoutExpired && (
+            <p className="text-purple-700 text-sm mt-2">Reloading page...</p>
+          )}
         </div>
       </div>
     );
